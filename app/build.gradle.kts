@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.example.healthiez"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -16,7 +16,7 @@ android {
         applicationId = "com.example.healthiez"
         minSdk = 26
         //noinspection OldTargetApi
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 

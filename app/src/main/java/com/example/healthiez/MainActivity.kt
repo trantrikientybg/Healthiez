@@ -83,20 +83,20 @@ fun HealthiezApp() {
 @Composable
 fun PhysicalScreenPlaceholder() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("TAB 1: THỂ CHẤT\n(Dev 3 sẽ code toàn bộ UI vào file này)")
+        Text("TAB 1: THỂ CHẤT")
     }
 }
 
 @Composable
 fun HomeScreenPlaceholder() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("TAB 2: TRANG CHỦ & AVATAR\n(Dev 2 sẽ code toàn bộ UI vào file này)")
+        Text("TAB 2: TRANG CHỦ & AVATAR")
     }
 }
 
 @Composable
 fun MentalScreenPlaceholder() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("TAB 3: TINH THẦN & AI CHAT\n(Dev 4 sẽ code toàn bộ UI vào file này)")
+        Text("TAB 3: TINH THẦN & AI CHAT")
     }
 }
