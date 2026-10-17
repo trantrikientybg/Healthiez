@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+Future<void> main() async {
+  // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo Supabase
+  await Supabase.initialize(
+    url: 'https://tzdbowjwsewwzmxvcfqk.supabase.co/rest/v1/',
+    anonKey: 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2',
+  );
+
   runApp(const HealthiezApp());
 }
 
