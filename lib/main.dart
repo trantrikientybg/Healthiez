@@ -1,31 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'constants/app_colors.dart';
+import 'screens/auth/code_confirmation_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
+import 'screens/auth/welcome_screen.dart';
+import 'services/auth_service.dart';
 
 Future<void> main() async {
   // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load bảng màu động từ tệp JSON
+  await AppColors.loadFromPath();
+
   // Khởi tạo Supabase
   await Supabase.initialize(
-    url: 'https://tzdbowjwsewwzmxvcfqk.supabase.co/rest/v1/',
-    anonKey: 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2',
+    url: 'https://tzdbowjwsewwzmxvcfqk.supabase.co',
+    publishableKey: 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2',
   );
 
-  runApp(const HealthiezApp());
+  // Kiểm tra trạng thái đăng nhập từ trước
+  final bool isLoggedIn = await AuthService.isLoggedIn();
+
+  runApp(HealthiezApp(isLoggedIn: isLoggedIn));
 }
 
 class HealthiezApp extends StatelessWidget {
-  const HealthiezApp({super.key});
+  final bool isLoggedIn;
+
+  const HealthiezApp({
+    super.key,
+    this.isLoggedIn = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Healthiez',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal), // Màu chủ đạo (Xanh mòng két healing)
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         useMaterial3: true,
       ),
-      home: const MainSkeleton(),
+      // Màn hình khởi đầu: Nếu đã đăng nhập thì đi thẳng vào MainSkeleton, ngược lại là WelcomeScreen
+      home: isLoggedIn ? const MainSkeleton() : const WelcomeScreen(),
+      routes: {
+        '/welcome': (context) => const WelcomeScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/code-confirmation': (context) => const CodeConfirmationScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
+        '/main': (context) => const MainSkeleton(),
+      },
       debugShowCheckedModeBanner: false, // Ẩn chữ Debug góc phải
     );
   }
