@@ -8,6 +8,8 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'services/auth_service.dart';
+import 'screens/mentalhealth/mental_screen.dart';
+import 'dart:math' as math;
 
 Future<void> main() async {
   // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
@@ -155,7 +157,7 @@ class MentalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text(
-        'TAB 3: TINH THẦN\n(Chat AI tâm lý, Gợi ý nhạc & Sách)',
+        'TAB 3',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
