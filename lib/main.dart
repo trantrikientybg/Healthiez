@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'features/physical/physical_screen.dart';
+
 Future<void> main() async {
   // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
   WidgetsFlutterBinding.ensureInitialized();
 
   // Khởi tạo Supabase
   await Supabase.initialize(
-    url: 'https://tzdbowjwsewwzmxvcfqk.supabase.co/rest/v1/',
-    anonKey: 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2',
+    url: 'https://tzdbowjwsewwzmxvcfqk.supabase.co',
+    publishableKey: 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2',
   );
 
   runApp(const HealthiezApp());
@@ -22,7 +24,9 @@ class HealthiezApp extends StatelessWidget {
     return MaterialApp(
       title: 'Healthiez',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal), // Màu chủ đạo (Xanh mòng két healing)
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+        ), // Màu chủ đạo (Xanh mòng két healing)
         useMaterial3: true,
       ),
       home: const MainSkeleton(),
@@ -42,8 +46,8 @@ class _MainSkeletonState extends State<MainSkeleton> {
   int _currentIndex = 1; // Mặc định mở Tab 2 (Tổng thể) ở giữa
 
   // Danh sách các màn hình (Placeholder)
-  final List<Widget> _screens = [
-    const PhysicalScreen(),
+  List<Widget> get _screens => [
+    PhysicalScreen(active: _currentIndex == 0),
     const HomeScreen(),
     const MentalScreen(),
   ];
@@ -52,10 +56,7 @@ class _MainSkeletonState extends State<MainSkeleton> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Dùng IndexedStack để giữ nguyên trạng thái (State) của các Tab khi chuyển qua lại
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (int index) {
@@ -88,21 +89,6 @@ class _MainSkeletonState extends State<MainSkeleton> {
 // ==============================================================
 // CÁC PLACEHOLDER - CHỖ TRỐNG ĐỂ CHIA VIỆC CHO TEAM
 // ==============================================================
-
-class PhysicalScreen extends StatelessWidget {
-  const PhysicalScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'TAB 1: THỂ CHẤT\n(Theo dõi giấc ngủ, thể thao, nước)',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
