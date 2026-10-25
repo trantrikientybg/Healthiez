@@ -8,8 +8,8 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'services/auth_service.dart';
-import 'screens/mentalhealth/mental_screen.dart';
-import 'dart:math' as math;
+import 'screens/mental/mental_screen.dart' as mental;
+// * import 'dart:math' as math;
 
 Future<void> main() async {
   // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
@@ -56,6 +56,9 @@ class HealthiezApp extends StatelessWidget {
         '/code-confirmation': (context) => const CodeConfirmationScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),
         '/main': (context) => const MainSkeleton(),
+        '/physical': (context) => const PhysicalScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/mental': (context) => const MentalScreen(),
       },
       debugShowCheckedModeBanner: false, // Ẩn chữ Debug góc phải
     );
@@ -155,12 +158,6 @@ class MentalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'TAB 3',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-    );
+    return const mental.MentalScreen();
   }
 }
