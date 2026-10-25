@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'physical_controller.dart';
+import 'step_card.dart';
+import 'step_controller.dart';
 
 class PhysicalScreen extends StatefulWidget {
   const PhysicalScreen({super.key, this.active = true});
@@ -16,6 +18,7 @@ class PhysicalScreen extends StatefulWidget {
 class _PhysicalScreenState extends State<PhysicalScreen>
     with WidgetsBindingObserver {
   final _controller = PhysicalController();
+  final _steps = StepController();
   final _form = GlobalKey<FormState>();
   final _height = TextEditingController();
   final _weight = TextEditingController();
@@ -26,6 +29,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     unawaited(_load());
+    unawaited(_steps.load());
     _scheduleMidnight();
   }
 
@@ -42,6 +46,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
     final nextDay = DateTime(now.year, now.month, now.day + 1);
     _midnight = Timer(nextDay.difference(now), () {
       _controller.refreshDay();
+      _steps.refreshDay();
       _scheduleMidnight();
     });
   }
@@ -49,13 +54,17 @@ class _PhysicalScreenState extends State<PhysicalScreen>
   @override
   void didUpdateWidget(covariant PhysicalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.active && !oldWidget.active) _controller.refreshDay();
+    if (widget.active && !oldWidget.active) {
+      _controller.refreshDay();
+      _steps.refreshDay();
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _controller.refreshDay();
+      _steps.refreshDay();
       _scheduleMidnight();
     }
   }
@@ -108,7 +117,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
                     Text('Sức khỏe thể chất', style: textTheme.headlineSmall),
                     const SizedBox(height: 8),
                     const Text(
-                      'Theo dõi chỉ số cơ thể và lượng nước mỗi ngày.',
+                      'Theo dõi chỉ số cơ thể, lượng nước và bước chân mỗi ngày.',
                     ),
                     const SizedBox(height: 16),
                     if (_controller.busy) const LinearProgressIndicator(),
@@ -224,6 +233,8 @@ class _PhysicalScreenState extends State<PhysicalScreen>
                       const SizedBox(height: 12),
                       const Text('Dữ liệu được lưu trên thiết bị này.'),
                     ],
+                    const SizedBox(height: 12),
+                    StepCard(controller: _steps),
                   ],
                 ),
               ),
@@ -241,6 +252,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
     _height.dispose();
     _weight.dispose();
     _controller.dispose();
+    _steps.dispose();
     super.dispose();
   }
 }
