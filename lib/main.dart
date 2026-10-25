@@ -2,22 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'features/physical/physical_screen.dart';
+import 'features/physical/physical_store.dart';
 
 Future<void> main() async {
   // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
   WidgetsFlutterBinding.ensureInitialized();
 
   // Khởi tạo Supabase
-  await Supabase.initialize(
-    url: 'https://tzdbowjwsewwzmxvcfqk.supabase.co',
-    publishableKey: 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2',
-  );
+  const url = String.fromEnvironment('SUPABASE_URL');
+  const key = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  if (!url.startsWith('https://') || !key.startsWith('sb_publishable_')) {
+    throw StateError(
+      'Pass a Supabase URL and publishable key with --dart-define-from-file.',
+    );
+  }
+  await Supabase.initialize(url: url, publishableKey: key);
 
-  runApp(const HealthiezApp());
+  runApp(HealthiezApp(client: Supabase.instance.client));
 }
 
 class HealthiezApp extends StatelessWidget {
-  const HealthiezApp({super.key});
+  const HealthiezApp({super.key, this.client});
+
+  final SupabaseClient? client;
 
   @override
   Widget build(BuildContext context) {
@@ -29,14 +36,16 @@ class HealthiezApp extends StatelessWidget {
         ), // Màu chủ đạo (Xanh mòng két healing)
         useMaterial3: true,
       ),
-      home: const MainSkeleton(),
+      home: MainSkeleton(client: client),
       debugShowCheckedModeBanner: false, // Ẩn chữ Debug góc phải
     );
   }
 }
 
 class MainSkeleton extends StatefulWidget {
-  const MainSkeleton({super.key});
+  const MainSkeleton({super.key, this.client});
+
+  final SupabaseClient? client;
 
   @override
   State<MainSkeleton> createState() => _MainSkeletonState();
@@ -47,7 +56,19 @@ class _MainSkeletonState extends State<MainSkeleton> {
 
   // Danh sách các màn hình (Placeholder)
   List<Widget> get _screens => [
-    PhysicalScreen(active: _currentIndex == 0),
+    if (widget.client case final client?)
+      StreamBuilder<AuthState>(
+        stream: client.auth.onAuthStateChange,
+        builder: (context, _) => PhysicalScreen(
+          key: ValueKey(client.auth.currentUser?.id),
+          active: _currentIndex == 0,
+          store: client.auth.currentUser == null
+              ? null
+              : PhysicalStore(client, client.auth.currentUser!.id),
+        ),
+      )
+    else
+      PhysicalScreen(active: _currentIndex == 0),
     const HomeScreen(),
     const MentalScreen(),
   ];

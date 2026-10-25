@@ -3,13 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'physical_controller.dart';
+import 'physical_store.dart';
 import 'step_card.dart';
 import 'step_controller.dart';
 
 class PhysicalScreen extends StatefulWidget {
-  const PhysicalScreen({super.key, this.active = true});
+  const PhysicalScreen({super.key, this.active = true, this.store});
 
   final bool active;
+  final PhysicalStore? store;
 
   @override
   State<PhysicalScreen> createState() => _PhysicalScreenState();
@@ -17,8 +19,8 @@ class PhysicalScreen extends StatefulWidget {
 
 class _PhysicalScreenState extends State<PhysicalScreen>
     with WidgetsBindingObserver {
-  final _controller = PhysicalController();
-  final _steps = StepController();
+  late final PhysicalController _controller;
+  late final StepController _steps;
   final _form = GlobalKey<FormState>();
   final _height = TextEditingController();
   final _weight = TextEditingController();
@@ -27,6 +29,15 @@ class _PhysicalScreenState extends State<PhysicalScreen>
   @override
   void initState() {
     super.initState();
+    final store = widget.store;
+    _controller = PhysicalController(
+      read: store == null ? null : () => store.read('physical'),
+      write: store == null ? null : (value) => store.write('physical', value),
+    );
+    _steps = StepController(
+      read: store == null ? null : () => store.read('steps'),
+      write: store == null ? null : (value) => store.write('steps', value),
+    );
     WidgetsBinding.instance.addObserver(this);
     unawaited(_load());
     unawaited(_steps.load());
@@ -231,7 +242,11 @@ class _PhysicalScreenState extends State<PhysicalScreen>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text('Dữ liệu được lưu trên thiết bị này.'),
+                      Text(
+                        widget.store == null
+                            ? 'Dữ liệu được lưu trên thiết bị này.'
+                            : 'Dữ liệu được lưu vào tài khoản. Bước chân lưu riêng theo thiết bị.',
+                      ),
                     ],
                     const SizedBox(height: 12),
                     StepCard(controller: _steps),

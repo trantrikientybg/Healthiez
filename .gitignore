@@ -52,3 +52,6 @@ PlanHealthiez.md
 graphify-out/
 .codex/
 Playbook/
+supabase/
+# Local Supabase build configuration
+/supabase.local.json

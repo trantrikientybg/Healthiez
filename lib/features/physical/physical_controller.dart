@@ -12,7 +12,7 @@ class PhysicalController extends ChangeNotifier {
        _read = read ?? _readPreferences,
        _write = write ?? _writePreferences;
 
-  // shortcut: one device-local record; add account storage when login is integrated.
+  // Default to device storage; signed-in screens inject Supabase persistence.
   static const storageKey = 'healthiez.physical.v1';
   static const waterReference = 2000;
   final DateTime Function() _now;
