@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../data/models/streak.dart';
-import '../../../../data/models/user_profile.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/brand_colors.dart';
+import '../../../data/models/streak.dart';
+import '../../../data/models/user_profile.dart';
 
 /// Avatar + "Xin chào, <tên>" + badge streak.
 /// profile / streak là null khi dữ liệu đang tải.
@@ -51,18 +51,18 @@ class _Avatar extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: (avatarUrl != null && avatarUrl!.isNotEmpty)
           ? Image.network(
-        avatarUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _defaultAvatar(),
-      )
+              avatarUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _defaultAvatar(),
+            )
           : _defaultAvatar(),
     );
   }
 
   Widget _defaultAvatar() => Padding(
-    padding: const EdgeInsets.all(16),
-    child: SvgPicture.asset('assets/icons/avatar.svg'),
-  );
+        padding: const EdgeInsets.all(16),
+        child: SvgPicture.asset('assets/icons/avatar.svg'),
+      );
 }
 
 class _GreetingBox extends StatelessWidget {
@@ -87,11 +87,10 @@ class _GreetingBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Xin chào,', style: AppTextStyles.greeting),
-          // ShaderMask tô gradient tím -> xanh lên chữ
           ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (bounds) =>
-                AppColors.accentGradient.createShader(bounds),
+                BrandColors.accentGradient.createShader(bounds),
             child: Text(
               username ?? '...',
               maxLines: 1,

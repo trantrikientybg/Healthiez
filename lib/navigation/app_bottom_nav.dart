@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
+import '../core/theme/brand_colors.dart';
+import '../core/theme/day_period.dart';
 
 class _NavItemData {
   final String label;
@@ -28,21 +29,22 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.chip,
-        // Bo cong hai góc trên giống thiết kế
-        borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: palette.chip,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+        boxShadow: const [
           BoxShadow(
-            color: Color(0x33000000), // đen, độ mờ ~20%
+            color: Color(0x33000000),
             blurRadius: 12,
             offset: Offset(0, -3),
           ),
         ],
       ),
       child: SafeArea(
-        top: false, // chỉ chừa chỗ cho thanh cử chỉ phía dưới
+        top: false,
         child: Padding(
           padding: const EdgeInsets.only(top: 10, bottom: 8),
           child: Row(
@@ -52,6 +54,8 @@ class AppBottomNav extends StatelessWidget {
                   child: _NavItem(
                     data: _items[i],
                     selected: i == currentIndex,
+                    inactiveColor: palette.navIconInactive,
+                    textColor: palette.textPrimary,
                     onTap: () => onTap(i),
                   ),
                 ),
@@ -66,37 +70,42 @@ class AppBottomNav extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final _NavItemData data;
   final bool selected;
+  final Color inactiveColor;
+  final Color textColor;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.data,
     required this.selected,
+    required this.inactiveColor,
+    required this.textColor,
     required this.onTap,
   });
 
-  static const LinearGradient _inactiveGradient = LinearGradient(
-    colors: [AppColors.iconInactive, AppColors.iconInactive],
-  );
-
   @override
   Widget build(BuildContext context) {
+    final inactiveGradient = LinearGradient(
+      colors: [inactiveColor, inactiveColor],
+    );
+
     return GestureDetector(
-      behavior: HitTestBehavior.opaque, // bấm vào vùng trống cũng ăn
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ShaderMask tô màu/gradient lên hình dạng của icon SVG
           ShaderMask(
             blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) => (selected
-                ? AppColors.accentGradient
-                : _inactiveGradient)
-                .createShader(bounds),
+            shaderCallback: (bounds) =>
+                (selected ? BrandColors.accentGradient : inactiveGradient)
+                    .createShader(bounds),
             child: SvgPicture.asset(data.iconAsset, width: 36, height: 36),
           ),
           const SizedBox(height: 4),
-          Text(data.label, style: AppTextStyles.navLabel),
+          Text(
+            data.label,
+            style: AppTextStyles.navLabel.copyWith(color: textColor),
+          ),
         ],
       ),
     );

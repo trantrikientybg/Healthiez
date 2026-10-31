@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/brand_colors.dart';
 
 /// Nền gradient tím -> xanh, đáy lượn sóng, logo ở góc trên trái.
 /// [child] là nội dung nằm dưới logo (ví dụ avatar + lời chào).
@@ -17,7 +17,7 @@ class AppHeader extends StatelessWidget {
       clipper: _WaveClipper(),
       child: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(gradient: AppColors.headerGradient),
+        decoration: const BoxDecoration(gradient: BrandColors.headerGradient),
         padding: EdgeInsets.fromLTRB(20, topInset + 12, 20, 44),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

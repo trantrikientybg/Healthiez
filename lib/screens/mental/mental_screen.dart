@@ -1,11 +1,75 @@
 import 'dart:math' as math;
-import 'mental_data.dart';
-import 'overview_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+// FILE NÀY GỒM 3 PHẦN:
+//  1. MODEL      : dữ liệu (Mood, Song, DailyRecord) + DailyRecordService nói chuyện với Supabase
+//  2. THUẬT TOÁN : chấm điểm từng tâm trạng để gợi ý nhạc
+//  3. MÀN HÌNH   : giao diện Tab Tinh thần (chọn tâm trạng, biểu đồ, nhạc)
 
 // ============ 1. MODEL ============
+enum Mood { happy, neutral, angry, tired, cry }
+enum Overview { positive, neutral, negative }
+extension MoodX on Mood {
+  String get label => const {
+    Mood.happy: 'Hạnh phúc',
+    Mood.neutral: 'Trung lập',
+    Mood.angry: 'Tức giận',
+    Mood.tired: 'Mệt mỏi',
+    Mood.cry: 'Buồn',
+  }[this]!;
+
+  String get asset => const {
+    Mood.happy: 'assets/images/Mood/mood_happy.png',
+    Mood.neutral: 'assets/images/Mood/mood_neutral.png',
+    Mood.angry: 'assets/images/Mood/mood_angry.png',
+    Mood.tired: 'assets/images/Mood/mood_tired.png',
+    Mood.cry: 'assets/images/Mood/mood_cry.png',
+  }[this]!;
+
+  Color get color => const {
+    Mood.happy: Color(0xFF4C8DFF),
+    Mood.neutral: Color(0xFFFFC94A),
+    Mood.angry: Color(0xFFFF7A5C),
+    Mood.tired: Color(0xFF7B6CF6),
+    Mood.cry: Color(0xFF5CC8B5),
+  }[this]!;
+}
+
+extension OverviewX on Overview {
+  String get label => const {
+    Overview.positive : 'Tích cực',
+    Overview.neutral : 'Trung lập',
+    Overview.negative : 'Tiêu cực',
+  }[this]!;
+
+  String get asset => const {
+    Overview.positive: 'assets/images/Overview/overview_positive.png',
+    Overview.neutral: 'assets/images/Overview/overview_neutral.png',
+    Overview.negative: 'assets/images/Overview/overview_negative.png',
+  }[this]!;
+
+}
+
+class Song {
+  final String title, content;
+  final Mood mood; // bài này hợp với tâm trạng nào
+  // final Image cover; // hình ảnh bài hát;
+  final Mood mood2;
+  final String url;
+  const Song(this.title, this.content, this.mood, this.mood2, this.url);
+}
+
+const songs = [
+  // Cozy Coffee Shop - Nhạc Jazz cho 1 ngày phấn khởi - https://open.spotify.com/playlist/5vVSfOsF8YRueAI1dOI0Lh
+  // Joe Hisaishi in Vienna - Âm hưởng kích thích cảm xúc  - https://open.spotify.com/album/2GUUSp5HD5OhINznTpd4TM
+  // Classical Piano - Giúp thư giãn trí óc - https://open.spotify.com/album/4vw6B9Myvro7uWjCOmOsBF
+  // Relaxing Ambient Sound - Âm thanh của bình yên - https://open.spotify.com/album/0TChik1N7gF9qxTjCSj7TF
+
+  Song('Vũ Trụ Có Anh', 'Sáng tác bởi Phương Mỹ Chi', Mood.happy, Mood.neutral, 'Url Link'),
+
+];
+
 class DailyRecord {
   final DateTime date;
   final double? sleepHours; final int? waterMl; // Cho physical
@@ -37,7 +101,7 @@ class DailyRecordService {
 
   Future<List<DailyRecord>> getRecords() async {
     final row = await _db
-        .from('mental_health_records')
+        .from('daily_records')
         .select('dates, emotions')
         .maybeSingle(); // Chưa có thì trả null
 
@@ -62,24 +126,13 @@ class DailyRecordService {
     required Mood emotion,
     DateTime? date,
   }) async {
-    await _db.rpc('upsert_mental_health_record', params: {
+    await _db.rpc('upsert_daily_record', params: {
       'p_date': _fmt(date ?? DateTime.now()),
       'p_emotion': emotion.name,
     });
   }
 }
-
-Future<void> _openUrl(BuildContext context, String url) async {
-  final uri = Uri.tryParse(url);
-  var ok = false;
-  if (uri != null && uri.hasScheme) {
-    try {
-      ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
-  }
-  if (ok) return;
-}
-// ============ 2. THUẬT TOÁN ============
+// ============ 2. THUẬT TOÁN ĐIỂM ============
 // Điểm = Tần suất 3-4 tuần gần đây x 1 + Streak lớn nhất x 1.5 + 5 (nếu hôm nay là tâm trạng đó)
 DateTime dateOnly(DateTime x) => DateTime(x.year, x.month, x.day);
 
@@ -160,6 +213,7 @@ Widget overviewImage(Map<DateTime, Mood> logs, {double size = 40}) {
   return Image.asset(
     overview.asset,
     width: size,
+    errorBuilder: (_, _, _) => Icon(Icons.sentiment_neutral, size: size, color: Colors.white),
   );
 }
 
@@ -262,7 +316,7 @@ class _MentalScreenState extends State<MentalScreen> {
     final suggested = topMood(scores, today); // tâm trạng nổi bật nhất
     // Sắp xếp bài hát theo điểm tâm trạng cao -> thấp (với mood2 phụ)
     final sorted = [...songs]..sort((a, b) {
-      // So sánh mood1 của mỗi bài hát
+      // So sánh mood 1 của mỗi bài hát
       final scoreA = scores[a.mood] ?? 0.0;
       final scoreB = scores[a.mood] ?? 0.0;
 
@@ -307,7 +361,7 @@ class _MentalScreenState extends State<MentalScreen> {
                 ),
               ),
 
-              ]
+            ]
             ),
           ),
           _card(
@@ -319,7 +373,7 @@ class _MentalScreenState extends State<MentalScreen> {
             title: 'Góc thư giãn - Âm nhạc cho tâm trạng',
             subtitle: suggested == null
                 ? 'Chọn tâm trạng để nhận gợi ý nhạc'
-                : 'Gợi ý nhạc theo tâm trạng ',
+                : 'Gợi ý theo tâm trạng nổi bật: ${suggested.label}',
             child: Column(children: sorted.map(_songTile).toList()),
           ),
           const SizedBox(height: 24),
@@ -373,7 +427,7 @@ class _MentalScreenState extends State<MentalScreen> {
                 ),
               ),
               GestureDetector(
-                onLongPress: () => showMoodOverview(context, positiveOverview),
+                onTap: () {/* TODO: đánh giá tổng quan */},
                 child: overviewImage(logs),
 
               ),
@@ -401,16 +455,16 @@ class _MentalScreenState extends State<MentalScreen> {
         ),
         child: Column(
             crossAxisAlignment: centerAligned ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-          children: [
-          Text(title,
-              textAlign: centerAligned ? TextAlign.center : TextAlign.start,
-              style: const TextStyle(
-                  color: Color(0xFF4C5BD4), fontWeight: FontWeight.bold, fontSize: 18)),
-          if (subtitle != null)
-            Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-          const SizedBox(height: 12),
-          child,
-        ]),
+            children: [
+              Text(title,
+                  textAlign: centerAligned ? TextAlign.center : TextAlign.start,
+                  style: const TextStyle(
+                      color: Color(0xFF4C5BD4), fontWeight: FontWeight.bold, fontSize: 18)),
+              if (subtitle != null)
+                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              const SizedBox(height: 12),
+              child,
+            ]),
       );
 
   Widget _moodButton(Mood m) {
@@ -433,7 +487,7 @@ class _MentalScreenState extends State<MentalScreen> {
   Widget _chart() {
     final counts = {for (final m in Mood.values) m: 0};
     final n = DateTime.now();
-    for (int i = 0; i < 28; i++) {
+    for (int i = 0; i < 7; i++) {
       final day = DateTime(n.year, n.month, n.day - i);
       final m = logs[day];
       if (m != null) counts[m] = counts[m]! + 1;
@@ -507,21 +561,10 @@ class _MentalScreenState extends State<MentalScreen> {
           ],
         ),
       ),
-    IconButton(
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
-        color: s.mood.color,
-        icon: const Icon(
-          Icons.play_circle_fill,
-          size: 32,
-        ),
-        onPressed: () => _openUrl(context, s.url),
-        ),]
-    )
+      const Icon(Icons.play_circle_fill, color: Color(0xFFFF8A5C), size: 32),
+    ]),
   );
 }
-
-
 
 class _DonutPainter extends CustomPainter { // Tạo chart tròn
   final Map<Mood, int> counts;
