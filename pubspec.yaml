@@ -43,6 +43,7 @@ dependencies:
   # === NHÓM 3: TÍNH NĂNG "KILLER" & MỞ RỘNG ===
   google_generative_ai: ^0.4.3 # Tích hợp Gemini AI làm Trợ lý tâm lý
   fl_chart: ^1.2.0 # Vẽ biểu đồ thống kê sức khỏe, calo, giấc ngủ cực đẹp
+  flutter_svg: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +70,7 @@ flutter:
   assets:
     - assets/images/
     - assets/colors/
+    - assets/icons/
     - assets/images/Mood/
     - assets/images/Overview/
     - assets/images/MusicCover/

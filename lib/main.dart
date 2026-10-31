@@ -46,7 +46,7 @@ class HealthiezApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // Đã đăng nhập thì vào thẳng MainShell, ngược lại là WelcomeScreen
-      home: const MainShell(), // TẠM: bỏ qua Login để dev, nhớ khôi phục,
+      home: isLoggedIn ? const MainShell() : const WelcomeScreen(),
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/register': (context) => const RegisterScreen(),
