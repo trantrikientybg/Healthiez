@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/theme/brand_colors.dart';
 import '../../../core/theme/day_period.dart';
 import '../../../shared/widgets/gradient_text.dart';
 import '../../../shared/widgets/progress_ring.dart';
@@ -47,7 +46,7 @@ class MetricCard extends StatelessWidget {
               children: [
                 GradientText(title, style: AppTextStyles.cardTitle),
                 const SizedBox(height: 6),
-                for (final line in lines) _buildLine(line, palette.textPrimary),
+                for (final line in lines) _buildLine(line, palette.textPrimary, palette.textAccent),
               ],
             ),
           ),
@@ -56,7 +55,7 @@ class MetricCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLine(MetricLine line, Color textColor) {
+  Widget _buildLine(MetricLine line, Color textColor, Color accentColor) {
     return Text.rich(
       TextSpan(
         style: TextStyle(
@@ -68,10 +67,7 @@ class MetricCard extends StatelessWidget {
           if (line.label.isNotEmpty) TextSpan(text: '${line.label} '),
           TextSpan(
             text: line.value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: BrandColors.purple,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, color: accentColor),
           ),
           if (line.suffix.isNotEmpty) TextSpan(text: ' ${line.suffix}'),
         ],

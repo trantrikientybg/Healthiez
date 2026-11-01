@@ -16,6 +16,7 @@ import 'widgets/daily_greeting_chip.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/mood_survey_card.dart';
 import 'widgets/overview_section.dart';
+import '../../data/repositories/mood_sync.dart';
 
 class HomeScreen extends StatefulWidget {
   /// Gọi khi bấm "Xem lại cảm xúc của bạn tháng này" (MainShell chuyển sang tab Tinh thần).
@@ -40,9 +41,24 @@ class _HomeScreenState extends State<HomeScreen> {
   Mood? _mood;
 
   @override
+  @override
   void initState() {
     super.initState();
+    MoodSync.instance.addListener(_onMoodSync);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    MoodSync.instance.removeListener(_onMoodSync);
+    super.dispose();
+  }
+
+  // Tab Tinh thần vừa đổi tâm trạng -> Home cập nhật theo
+  void _onMoodSync() {
+    final s = MoodSync.instance;
+    if (identical(s.source, this) || s.mood == null) return;
+    setState(() => _mood = s.mood);
   }
 
   Future<void> _loadData() async {
@@ -75,7 +91,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _onMoodSelected(Mood mood) async {
     setState(() => _mood = mood); // hiện ngay, không chờ mạng
     final ok = await _moodRepo.saveToday(mood);
-    if (!mounted || ok) return;
+    if (!mounted) return;
+    if (ok) {
+      MoodSync.instance.update(mood, this); // báo cho tab Tinh thần
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Chưa lưu được tâm trạng. Kiểm tra kết nối và thử lại.'),

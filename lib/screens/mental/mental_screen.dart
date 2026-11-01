@@ -4,6 +4,7 @@ import 'overview_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../data/repositories/mood_sync.dart';
 
 // ============ 1. MODEL ============
 class DailyRecord {
@@ -178,7 +179,24 @@ class _MentalScreenState extends State<MentalScreen> {
   @override
   void initState() {
     super.initState();
+    MoodSync.instance.addListener(_onMoodSync);
     _load();
+  }
+
+  @override
+  void dispose() {
+    MoodSync.instance.removeListener(_onMoodSync);
+    super.dispose();
+  }
+
+  // Trang chủ vừa đổi tâm trạng -> Tinh thần cập nhật theo
+  void _onMoodSync() {
+    final s = MoodSync.instance;
+    if (identical(s.source, this) || s.mood == null) return;
+    setState(() {
+      today = s.mood;
+      logs[dateOnly(DateTime.now())] = s.mood!;
+    });
   }
 
   Future<void> _loadUser() async {
@@ -239,6 +257,7 @@ class _MentalScreenState extends State<MentalScreen> {
 
     try {
       await DailyRecordService().saveRecord(emotion: m);
+      MoodSync.instance.update(m, this);
     } catch (e) {
       // Lưu thất bại thì trả về như cũ
       if (!mounted) return;

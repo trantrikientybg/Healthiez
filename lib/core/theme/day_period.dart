@@ -21,6 +21,8 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
   final Color card;
   final Color chip;
   final Color textPrimary;
+  final Color textAccent;          // số liệu nổi bật, link
+  final LinearGradient titleGradient; // tiêu đề thẻ
   final Color navIconInactive;
   final Color ringTrack;
 
@@ -29,15 +31,23 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
     required this.card,
     required this.chip,
     required this.textPrimary,
+    required this.textAccent,
+    required this.titleGradient,
     required this.navIconInactive,
     required this.ringTrack,
   });
+
+  static const _lightTitle = LinearGradient(
+    colors: [Color(0xFF6A4CFF), Color(0xFF2D9CFF)],
+  );
 
   static const morning = PeriodPalette(
     background: Color(0xFFF7F9FC),
     card: Color(0xFFE6EAF1),
     chip: Color(0xFFEFF1F5),
     textPrimary: Color(0xFF111111),
+    textAccent: Color(0xFF6A4CFF),
+    titleGradient: _lightTitle,
     navIconInactive: Color(0xFF9AA5B8),
     ringTrack: Color(0xFFF0F0F0),
   );
@@ -47,6 +57,8 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
     card: Color(0xFFFFE0B2),
     chip: Color(0xFFFFE9CC),
     textPrimary: Color(0xFF111111),
+    textAccent: Color(0xFF6A4CFF),
+    titleGradient: _lightTitle,
     navIconInactive: Color(0xFFB8A58F),
     ringTrack: Color(0xFFFFF8EE),
   );
@@ -55,16 +67,20 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
     background: Color(0xFF3A3F4B),
     card: Color(0xFF4A505E),
     chip: Color(0xFF454B58),
-    textPrimary: Color(0xFFF2F4F8),
+    textPrimary: Color(0xFFFFFFFF),
+    textAccent: Color(0xFFFFFFFF),
+    titleGradient: LinearGradient(
+      colors: [Color(0xFFC4B5FF), Color(0xFF8FD0FF)], // tím/xanh pastel, đọc được trên nền tối
+    ),
     navIconInactive: Color(0xFF8A93A6),
     ringTrack: Color(0xFF5C6270),
   );
 
   static PeriodPalette of(DayPeriod p) => switch (p) {
-        DayPeriod.morning => morning,
-        DayPeriod.afternoon => afternoon,
-        DayPeriod.evening => evening,
-      };
+    DayPeriod.morning => morning,
+    DayPeriod.afternoon => afternoon,
+    DayPeriod.evening => evening,
+  };
 
   @override
   PeriodPalette copyWith({
@@ -72,6 +88,8 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
     Color? card,
     Color? chip,
     Color? textPrimary,
+    Color? textAccent,
+    LinearGradient? titleGradient,
     Color? navIconInactive,
     Color? ringTrack,
   }) =>
@@ -80,6 +98,8 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
         card: card ?? this.card,
         chip: chip ?? this.chip,
         textPrimary: textPrimary ?? this.textPrimary,
+        textAccent: textAccent ?? this.textAccent,
+        titleGradient: titleGradient ?? this.titleGradient,
         navIconInactive: navIconInactive ?? this.navIconInactive,
         ringTrack: ringTrack ?? this.ringTrack,
       );
@@ -92,6 +112,8 @@ class PeriodPalette extends ThemeExtension<PeriodPalette> {
       card: Color.lerp(card, other.card, t)!,
       chip: Color.lerp(chip, other.chip, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textAccent: Color.lerp(textAccent, other.textAccent, t)!,
+      titleGradient: LinearGradient.lerp(titleGradient, other.titleGradient, t)!,
       navIconInactive: Color.lerp(navIconInactive, other.navIconInactive, t)!,
       ringTrack: Color.lerp(ringTrack, other.ringTrack, t)!,
     );
