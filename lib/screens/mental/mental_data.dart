@@ -49,7 +49,7 @@ extension OverviewX on Overview {
   }[this]!;
 
   String get asset => const {
-    Overview.positive: 'assets/images/Overview/overview_netral.png',
+    Overview.positive: 'assets/images/Overview/overview_neutral.png',
     Overview.neutral: 'assets/images/Overview/overview_positive.png',
     Overview.negative: 'assets/images/Overview/overview_negative.png',
   }[this]!;
