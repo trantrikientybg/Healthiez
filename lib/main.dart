@@ -31,9 +31,7 @@ class HealthiezApp extends StatelessWidget {
     return MaterialApp(
       title: 'Healthiez',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-        ), // Màu chủ đạo (Xanh mòng két healing)
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6844FF)),
         useMaterial3: true,
       ),
       home: MainSkeleton(client: client),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'physical_controller.dart';
 import 'physical_store.dart';
+import 'physical_style.dart';
 import 'step_card.dart';
 import 'step_controller.dart';
 
@@ -33,6 +34,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
     _controller = PhysicalController(
       read: store == null ? null : () => store.read('physical'),
       write: store == null ? null : (value) => store.write('physical', value),
+      writeMeasurements: store?.writeMeasurements,
     );
     _steps = StepController(
       read: store == null ? null : () => store.read('steps'),
@@ -100,10 +102,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
         textInputAction: controller == _height
             ? TextInputAction.next
             : TextInputAction.done,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
+        decoration: InputDecoration(labelText: label),
         validator: (value) =>
             PhysicalController.parseMeasurement(value ?? '') == null
             ? 'Nhập số lớn hơn 0.'
@@ -112,150 +111,182 @@ class _PhysicalScreenState extends State<PhysicalScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          final textTheme = Theme.of(context).textTheme;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Sức khỏe thể chất', style: textTheme.headlineSmall),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Theo dõi chỉ số cơ thể, lượng nước và bước chân mỗi ngày.',
-                    ),
-                    const SizedBox(height: 16),
-                    if (_controller.busy) const LinearProgressIndicator(),
-                    if (_controller.error != null) ...[
-                      Semantics(
-                        liveRegion: true,
-                        child: Text(
-                          _controller.error!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      ),
-                      if (!_controller.ready)
-                        TextButton(
-                          onPressed: _controller.busy ? null : _load,
-                          child: const Text('Thử lại'),
-                        ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (_controller.ready) ...[
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Form(
-                            key: _form,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  'Chỉ số cơ thể',
-                                  style: textTheme.titleLarge,
-                                ),
-                                const SizedBox(height: 16),
-                                _measurementField('Chiều cao (cm)', _height),
-                                const SizedBox(height: 16),
-                                _measurementField('Cân nặng (kg)', _weight),
-                                const SizedBox(height: 16),
-                                FilledButton(
-                                  onPressed: _controller.busy
-                                      ? null
-                                      : _saveMeasurements,
-                                  child: const Text('Lưu chỉ số'),
-                                ),
-                                const SizedBox(height: 12),
-                                Semantics(
-                                  liveRegion: true,
-                                  child: Text(
-                                    _controller.bmi == null
-                                        ? 'Nhập và lưu chiều cao, cân nặng để xem BMI.'
-                                        : 'BMI: ${_controller.bmi!.toStringAsFixed(1)}',
-                                    style: textTheme.titleMedium,
-                                  ),
-                                ),
-                              ],
+    return Theme(
+      data: physicalTheme(Theme.of(context)),
+      child: ColoredBox(
+        color: physicalBackground,
+        child: SafeArea(
+          child: ListenableBuilder(
+            listenable: _controller,
+            builder: (context, _) {
+              final textTheme = Theme.of(context).textTheme;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const PhysicalHeader(),
+                        const SizedBox(height: 24),
+                        if (_controller.busy) const LinearProgressIndicator(),
+                        if (_controller.error != null) ...[
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _controller.error!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                'Nước uống hôm nay',
-                                style: textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 12),
-                              Semantics(
-                                liveRegion: true,
-                                child: Text(
-                                  '${_controller.waterMl} ml',
-                                  style: textTheme.headlineSmall,
+                          if (!_controller.ready)
+                            TextButton(
+                              onPressed: _controller.busy ? null : _load,
+                              child: const Text('Thử lại'),
+                            ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (_controller.ready) ...[
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Form(
+                                key: _form,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: const CircleAvatar(
+                                        backgroundColor: Color(0xFFF0EBFF),
+                                        child: Icon(
+                                          Icons.monitor_weight_outlined,
+                                          color: physicalPurple,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        'Chỉ số cơ thể',
+                                        style: textTheme.titleLarge,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _measurementField(
+                                      'Chiều cao (cm)',
+                                      _height,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _measurementField('Cân nặng (kg)', _weight),
+                                    const SizedBox(height: 16),
+                                    FilledButton(
+                                      onPressed: _controller.busy
+                                          ? null
+                                          : _saveMeasurements,
+                                      child: const Text('Lưu chỉ số'),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Semantics(
+                                      liveRegion: true,
+                                      child: Text(
+                                        _controller.bmi == null
+                                            ? 'Nhập và lưu chiều cao, cân nặng để xem BMI.'
+                                            : 'BMI: ${_controller.bmi!.toStringAsFixed(1)}',
+                                        style: textTheme.titleMedium,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value:
-                                    (_controller.waterMl /
-                                            PhysicalController.waterReference)
-                                        .clamp(0.0, 1.0),
-                                semanticsLabel: 'Tiến độ uống nước hôm nay',
-                              ),
-                              const SizedBox(height: 8),
-                              const Text('Mốc tham khảo: 2.000 ml mỗi ngày.'),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  FilledButton.icon(
-                                    onPressed: _controller.busy
-                                        ? null
-                                        : _controller.addWater,
-                                    icon: const Icon(Icons.water_drop_outlined),
-                                    label: const Text('Thêm 250 ml'),
+                                  ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const CircleAvatar(
+                                      backgroundColor: Color(0xFFE8F4FF),
+                                      child: Icon(
+                                        Icons.water_drop_outlined,
+                                        color: Color(0xFF1473BA),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      'Nước uống hôm nay',
+                                      style: textTheme.titleLarge,
+                                    ),
                                   ),
-                                  TextButton(
-                                    onPressed:
-                                        _controller.busy || !_controller.canUndo
-                                        ? null
-                                        : _controller.undoWater,
-                                    child: const Text('Hoàn tác'),
+                                  const SizedBox(height: 12),
+                                  Semantics(
+                                    liveRegion: true,
+                                    child: Text(
+                                      '${_controller.waterMl} ml',
+                                      style: textTheme.headlineSmall,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  LinearProgressIndicator(
+                                    value:
+                                        (_controller.waterMl /
+                                                PhysicalController
+                                                    .waterReference)
+                                            .clamp(0.0, 1.0),
+                                    semanticsLabel: 'Tiến độ uống nước hôm nay',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Mốc tham khảo: 2.000 ml mỗi ngày.',
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      FilledButton.icon(
+                                        onPressed: _controller.busy
+                                            ? null
+                                            : _controller.addWater,
+                                        icon: const Icon(
+                                          Icons.water_drop_outlined,
+                                        ),
+                                        label: const Text('Thêm 250 ml'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            _controller.busy ||
+                                                !_controller.canUndo
+                                            ? null
+                                            : _controller.undoWater,
+                                        child: const Text('Hoàn tác'),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        widget.store == null
-                            ? 'Dữ liệu được lưu trên thiết bị này.'
-                            : 'Dữ liệu được lưu vào tài khoản. Bước chân lưu riêng theo thiết bị.',
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    StepCard(controller: _steps),
-                  ],
+                          const SizedBox(height: 12),
+                          Text(
+                            widget.store == null
+                                ? 'Dữ liệu được lưu trên thiết bị này.'
+                                : 'Dữ liệu được lưu vào tài khoản. Bước chân lưu riêng theo thiết bị.',
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        StepCard(controller: _steps),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }

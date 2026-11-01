@@ -21,7 +21,24 @@ Copy `supabase.example.json` to `supabase.local.json` and fill in the project UR
 
 ## Physical health storage
 
-Signed-out use keeps the existing device storage. With a Supabase Auth session, measurements, BMI inputs, daily water, and steps use `physical_health_records`. The screen resets when accounts change. Login UI belongs to the team's auth feature and is not implemented here. Existing guest records stay on the device and are not automatically uploaded to an account.
+For the Android Studio/IntelliJ run configuration, database payload contract,
+valid signup seed fragment, and pending team integration details, see
+[the physical integration handoff](docs/physical-integration.md).
+
+Signed-out use keeps device storage. The first merge uses the deployed physical
+snapshot table by default, without new database migrations. After the prepared profile migration, a
+Supabase Auth session uses `profiles` for measurements/BMI inputs and
+`physical_health_records` for daily water and per-device steps. The screen resets
+when accounts change. Login UI belongs to the team's auth feature. Existing guest
+records stay on the device and are not automatically uploaded to an account.
+
+The optional profile integration (`--dart-define=PHYSICAL_PROFILE_STORAGE=true`)
+requires the prepared SQL migrations in
+[`docs/sql`](docs/physical-integration.md#deployment-requirement) before signed-in
+use in that mode: measurements move to decimal `profiles.height`/`weight`, with atomic save
+RPCs and owner-only profile reads. These migrations have been rehearsed with
+rollback and **are not deployed**. Coordinate the auth teammate's anonymous
+username lookup change before deployment. Guest storage is unchanged.
 
 The table stores the latest physical snapshot and the latest step snapshot per installation. Sensor baselines belong to one device; steps are not added together across phones. Account saves require a connection. Failed reads offer Retry; failed writes preserve the confirmed values and allow another attempt. There is no offline sync queue or historical chart data. Simultaneous edits on multiple devices use the last saved snapshot; restart the app to load another device's changes.
 

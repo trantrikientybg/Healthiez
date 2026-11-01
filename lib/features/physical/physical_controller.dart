@@ -8,9 +8,11 @@ class PhysicalController extends ChangeNotifier {
     DateTime Function()? now,
     Future<String?> Function()? read,
     Future<bool> Function(String)? write,
+    Future<bool> Function(String)? writeMeasurements,
   }) : _now = now ?? DateTime.now,
        _read = read ?? _readPreferences,
-       _write = write ?? _writePreferences;
+       _write = write ?? _writePreferences,
+       _writeMeasurements = writeMeasurements ?? write ?? _writePreferences;
 
   // Default to device storage; signed-in screens inject Supabase persistence.
   static const storageKey = 'healthiez.physical.v1';
@@ -18,6 +20,7 @@ class PhysicalController extends ChangeNotifier {
   final DateTime Function() _now;
   final Future<String?> Function() _read;
   final Future<bool> Function(String) _write;
+  final Future<bool> Function(String) _writeMeasurements;
   bool _disposed = false;
   bool ready = false;
   bool busy = false;
@@ -155,7 +158,8 @@ class PhysicalController extends ChangeNotifier {
     final nextWeight = weight ?? weightKg;
     _changed();
     try {
-      final saved = await _write(
+      final write = height == null ? _write : _writeMeasurements;
+      final saved = await write(
         jsonEncode({
           'heightCm': nextHeight,
           'weightKg': nextWeight,
