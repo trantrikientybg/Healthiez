@@ -39,10 +39,13 @@ dependencies:
   # === NHÓM 2: DỮ LIỆU & BACKEND ===
   supabase_flutter: ^2.6.0 # Hệ thống Database + Đăng nhập (Thay thế Firebase theo chuẩn GDG)
   shared_preferences: ^2.3.2 # Lưu các cài đặt nhỏ dưới máy (như trạng thái đăng nhập)
+  image_picker: ^1.1.2 # Tải ảnh từ thư viện thiết bị làm avatar
 
   # === NHÓM 3: TÍNH NĂNG "KILLER" & MỞ RỘNG ===
   google_generative_ai: ^0.4.3 # Tích hợp Gemini AI làm Trợ lý tâm lý
   fl_chart: ^1.2.0 # Vẽ biểu đồ thống kê sức khỏe, calo, giấc ngủ cực đẹp
+  flutter_local_notifications: ^18.0.1 # Lên lịch thông báo đẩy cục bộ
+  timezone: ^0.9.4 # Xử lý khung giờ hỗ trợ hẹn giờ thông báo chính xác
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +57,13 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/images/logo_icon.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -69,6 +79,7 @@ flutter:
   assets:
     - assets/images/
     - assets/colors/
+    - assets/quotes/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

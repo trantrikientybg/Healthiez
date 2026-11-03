@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../constants/app_colors.dart';
+import '../../core/constants/app_assets.dart';
+import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/auth/custom_textfield.dart';
-import '../../widgets/auth/header_wave.dart';
-import '../../widgets/auth/primary_button.dart';
-import '../../widgets/auth/social_buttons.dart';
+import '../../shared/widgets/app_header.dart';
+import 'widgets/custom_textfield.dart';
+import 'widgets/primary_button.dart';
+import 'widgets/social_buttons.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,13 +29,15 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Lắng nghe sự kiện đăng nhập từ Supabase cho Social Login
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       final AuthChangeEvent event = data.event;
       final Session? session = data.session;
 
       if (event == AuthChangeEvent.signedIn && session != null) {
+        // Tự động khởi tạo username OAuth theo quy tắc gg_prefix hoặc fb_fbid
+        await AuthService.ensureOAuthUsernameCreated(session.user);
         await AuthService.saveCurrentSessionState();
+
         if (!mounted) return;
 
         setState(() {
@@ -103,10 +106,10 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
   }
 
   void _handleLogin() async {
-    final email = _emailController.text.trim();
+    final input = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
+    if (input.isEmpty || password.isEmpty) {
       _showError('Vui lòng nhập đầy đủ tên tài khoản/email và mật khẩu!');
       return;
     }
@@ -116,17 +119,15 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
     });
 
     try {
-      // Nếu như email chứa @ thì là email thật, còn không thì là username
-      final AuthResponse response;
-
-      if (email.contains('@')) {
+      AuthResponse response;
+      if (input.contains('@')) {
         response = await AuthService.signInWithEmail(
-          email: email,
+          email: input,
           password: password,
         );
       } else {
         response = await AuthService.signInWithUsername(
-          username: email,
+          username: input,
           password: password,
         );
       }
@@ -196,8 +197,7 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Header Sóng Xanh - Giữ tỉ lệ 36% đồng nhất
-            HeaderWave(
+            AppHeader(
               height: screenHeight * 0.36,
             ),
 
@@ -210,12 +210,11 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                   children: [
                     const SizedBox(height: 18),
 
-                    // 2. Tiêu đề: Icon login_icon.png + "Đăng nhập!"
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/login_icon.png',
+                          AppAssets.loginIcon,
                           width: 28,
                           height: 32,
                           fit: BoxFit.contain,
@@ -241,7 +240,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 18),
 
-                    // 3. Ô 1: Tên tài khoản / Email
                     CustomTextField(
                       hintText: 'Tên tài khoản',
                       controller: _emailController,
@@ -249,7 +247,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 11),
 
-                    // 4. Ô 2: Mật khẩu
                     CustomTextField(
                       hintText: 'Mật khẩu',
                       controller: _passwordController,
@@ -258,7 +255,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 6),
 
-                    // 5. Link "Quên mật khẩu?" nằm ở bên phải
                     Align(
                       alignment: Alignment.centerRight,
                       child: InkWell(
@@ -278,7 +274,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 18),
 
-                    // 6. Nút "Tiếp tục"
                     if (_isLoading)
                       CircularProgressIndicator(color: AppColors.primary)
                     else
@@ -291,7 +286,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 20),
 
-                    // 7. Text "hoặc đăng nhập bằng"
                     Text(
                       'hoặc đăng nhập bằng',
                       style: TextStyle(
@@ -302,7 +296,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 12),
 
-                    // 8. Cụm Icon Facebook & Google
                     SocialButtonsRow(
                       onFacebookPressed: () {
                         _handleSocialLogin(
@@ -320,7 +313,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                     const SizedBox(height: 20),
 
-                    // 9. Footer: "Chưa có tài khoản? [Đăng ký]"
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

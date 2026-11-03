@@ -33,7 +33,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F8), // Nền xám nhạt bo tròn chuẩn thiết kế
+        color: const Color(0xFFF3F4F8),
         borderRadius: BorderRadius.circular(25),
       ),
       child: TextFormField(

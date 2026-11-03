@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
+import '../../core/constants/app_assets.dart';
+import '../../core/theme/app_colors.dart';
 
 class HeaderWaveClipper extends CustomClipper<Path> {
   @override
@@ -7,7 +8,6 @@ class HeaderWaveClipper extends CustomClipper<Path> {
     Path path = Path();
     path.lineTo(0, size.height - 45);
 
-    // Đường cong gợn sóng thứ 1
     var firstControlPoint = Offset(size.width * 0.3, size.height + 12);
     var firstEndPoint = Offset(size.width * 0.55, size.height - 25);
     path.quadraticBezierTo(
@@ -17,7 +17,6 @@ class HeaderWaveClipper extends CustomClipper<Path> {
       firstEndPoint.dy,
     );
 
-    // Đường cong gợn sóng thứ 2
     var secondControlPoint = Offset(size.width * 0.8, size.height - 60);
     var secondEndPoint = Offset(size.width, size.height - 25);
     path.quadraticBezierTo(
@@ -36,11 +35,11 @@ class HeaderWaveClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-class HeaderWave extends StatelessWidget {
+class AppHeader extends StatelessWidget {
   final double height;
   final Widget? extraContent;
 
-  const HeaderWave({
+  const AppHeader({
     super.key,
     this.height = 240,
     this.extraContent,
@@ -62,15 +61,14 @@ class HeaderWave extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
               Image.asset(
-                'assets/images/logo.png',
+                AppAssets.logo,
                 height: 48,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
-                  // Hiển thị fallback nếu chưa tìm thấy ảnh
-                  return Row(
+                  return const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Health',
                         style: TextStyle(
                           fontSize: 38,
@@ -78,8 +76,8 @@ class HeaderWave extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      const Icon(Icons.fitness_center, color: Colors.white, size: 28),
-                      const Text(
+                      Icon(Icons.fitness_center, color: Colors.white, size: 28),
+                      Text(
                         'ez',
                         style: TextStyle(
                           fontSize: 38,
