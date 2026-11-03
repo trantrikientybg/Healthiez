@@ -74,7 +74,7 @@ const songs = [
   Song('Ocean Ambient', 'Giấc ngủ hòa cùng tiếng đại dương', Mood.neutral, Mood.tired, '3bOWrzil9JfMtd2nqiEUx2'),
   Song('Japanese Zen Garden', 'Nhạc chữa lành phong cách Nhật', Mood.cry, Mood.happy, '0XvBIoFUDrKfoPmnhz1fS4'),
   Song('Sleep', 'Nhạc đi ngủ zzzz', Mood.tired, Mood.neutral, '37i9dQZF1DWZd79rJ6a7lp'),
-  Song('Bossa Nova Music', 'Nhạc Bossa Nova vui tươi nhẹ nhàng', Mood.happy, Mood.neutral, '37i9dQZF1DWWgccrbg3zbJ'),
+  Song('Bossa Nova Chill', 'Nhạc Bossa Nova vui tươi nhẹ nhàng', Mood.happy, Mood.neutral, '37i9dQZF1DWWgccrbg3zbJ'),
   Song('Deep Sleep', 'Nhạc đi ngủ nhưng sâuuu', Mood.tired, Mood.cry, '37i9dQZF1DWYcDQ1hSjOpY'),
   Song('Todays Top Híts' , 'Khởi đầu ngày mới năng lượng tích cực', Mood.happy, Mood.angry, '37i9dQZF1DXcBWIGoYBM5M'),
   Song('Peaceful Piano', 'Không gian piano bay bổng', Mood.cry, Mood.neutral, '37i9dQZF1DX4sWSpwq3LiO'),
