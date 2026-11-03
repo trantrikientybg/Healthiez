@@ -59,23 +59,26 @@ extension OverviewX on Overview {
 class Song {
   final String title, content;
   final Mood mood; // bài này hợp với tâm trạng nào
-  // final Image cover; // hình ảnh bài hát;
+  //final String coverUrl; // hình ảnh bài hát;
   final Mood mood2;
-  final String url;
-  const Song(this.title, this.content, this.mood, this.mood2, this.url);
+  final String id;
+  //final String url;
+  const Song(this.title, this.content, this.mood, this.mood2, this.id);
+  String get url => 'https://open.spotify.com/playlist/$id';
 }
 
 const songs = [
-  // Cozy Coffee Shop - Nhạc Jazz cho 1 ngày phấn khởi - https://open.spotify.com/playlist/5vVSfOsF8YRueAI1dOI0Lh
-  // Joe Hisaishi in Vienna - Âm hưởng kích thích cảm xúc  - https://open.spotify.com/album/2GUUSp5HD5OhINznTpd4TM
-  // Classical Piano - Giúp thư giãn trí óc - https://open.spotify.com/album/4vw6B9Myvro7uWjCOmOsBF
-  // Relaxing Ambient Sound - Âm thanh của bình yên - https://open.spotify.com/album/0TChik1N7gF9qxTjCSj7TF
-
-  Song('Vũ Trụ Có Anh', 'Sáng tác bởi Phương Mỹ Chi', Mood.happy, Mood.neutral, 'Url Link'),
-  Song('Vũ Trụ Có Anh', 'Sáng tác bởi Phương Mỹ Chi', Mood.happy, Mood.neutral, 'Url Link'),
-  Song('Vũ Trụ Có Anh', 'Sáng tác bởi Phương Mỹ Chi', Mood.happy, Mood.neutral, 'Url Link'),
-  Song('Vũ Trụ Có Anh', 'Sáng tác bởi Phương Mỹ Chi', Mood.happy, Mood.neutral, 'Url Link'),
-  Song('Vũ Trụ Có Anh', 'Sáng tác bởi Phương Mỹ Chi', Mood.happy, Mood.neutral, 'Url Link'),
+  Song('Cozy Coffee Shop', 'Nhạc Jazz cho 1 ngày phấn khởi', Mood.happy, Mood.neutral, '5vVSfOsF8YRueAI1dOI0Lh'),
+  Song('Classical Piano', 'Giúp thư giãn trí óc', Mood.tired, Mood.angry, '37i9dQZF1DWUqIzZNMSCv3'),
+  Song('Ambient Relaxation', 'Âm thanh của bình yên', Mood.angry, Mood.neutral, '37i9dQZF1DX3Ogo9pFvBkY'),
+  Song('Ocean Ambient', 'Giấc ngủ hòa cùng tiếng đại dương', Mood.neutral, Mood.tired, '3bOWrzil9JfMtd2nqiEUx2'),
+  Song('Japanese Zen Garden', 'Nhạc chữa lành phong cách Nhật', Mood.cry, Mood.happy, '0XvBIoFUDrKfoPmnhz1fS4'),
+  Song('Sleep', 'Nhạc đi ngủ zzzz', Mood.tired, Mood.neutral, '37i9dQZF1DWZd79rJ6a7lp'),
+  Song('Bossa Nova Music', 'Nhạc Bossa Nova vui tươi nhẹ nhàng', Mood.happy, Mood.neutral, '37i9dQZF1DWWgccrbg3zbJ'),
+  Song('Deep Sleep', 'Nhạc đi ngủ nhưng sâuuu', Mood.tired, Mood.cry, '37i9dQZF1DWYcDQ1hSjOpY'),
+  Song('Todays Top Híts' , 'Khởi đầu ngày mới năng lượng tích cực', Mood.happy, Mood.angry, '37i9dQZF1DXcBWIGoYBM5M'),
+  Song('Peaceful Piano', 'Không gian piano bay bổng', Mood.cry, Mood.neutral, '37i9dQZF1DX4sWSpwq3LiO'),
+  Song('Amazing Dance Music', 'Nhạc quẩy sôi động ^-^ ', Mood.happy, Mood.happy, '1fve3LRzJzIbtKgIYoDrqA'),
 
 ];
 
@@ -104,3 +107,4 @@ const neutralOverview = MoodOverview(
   'Tâm trạng của bạn có vẻ đang tốt lên mỗi ngày, hãy giữ làm động lực cho một cuộc sống khỏe mạnh hơn',
   color: Color(0xFF2FC25D),
 );
+

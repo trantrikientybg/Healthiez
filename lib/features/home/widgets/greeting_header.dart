@@ -24,7 +24,7 @@ class GreetingHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _GreetingBox(username: profile?.username),
+              _GreetingBox(username: profile?.name),
               const SizedBox(height: 10),
               _StreakBadge(days: streak?.currentDays),
             ],

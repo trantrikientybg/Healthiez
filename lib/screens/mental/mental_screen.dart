@@ -4,6 +4,10 @@ import 'overview_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:healthiez/core/theme/day_period.dart';
+import 'package:healthiez/core/theme/app_text_styles.dart';
+import 'spotify_cover.dart';
+import '../../data/repositories/mood_sync.dart';
 
 // ============ 1. MODEL ============
 class DailyRecord {
@@ -79,6 +83,7 @@ Future<void> _openUrl(BuildContext context, String url) async {
   }
   if (ok) return;
 }
+
 // ============ 2. THUẬT TOÁN ============
 // Điểm = Tần suất 3-4 tuần gần đây x 1 + Streak lớn nhất x 1.5 + 5 (nếu hôm nay là tâm trạng đó)
 DateTime dateOnly(DateTime x) => DateTime(x.year, x.month, x.day);
@@ -178,7 +183,24 @@ class _MentalScreenState extends State<MentalScreen> {
   @override
   void initState() {
     super.initState();
+    MoodSync.instance.addListener(_onMoodSync);
     _load();
+  }
+
+  @override
+  void dispose() {
+    MoodSync.instance.removeListener(_onMoodSync);
+    super.dispose();
+  }
+
+  // Trang chủ vừa đổi tâm trạng -> Tinh thần cập nhật theo
+  void _onMoodSync() {
+    final s = MoodSync.instance;
+    if (identical(s.source, this) || s.mood == null) return;
+    setState(() {
+      today = s.mood;
+      logs[dateOnly(DateTime.now())] = s.mood!;
+    });
   }
 
   Future<void> _loadUser() async {
@@ -201,8 +223,18 @@ class _MentalScreenState extends State<MentalScreen> {
       } catch (_) {}
     }
 
-    // name: tên thật (Google/Facebook), không có thì dùng username
-    String? n = ((meta?['full_name'] ?? meta?['name']) as String?)?.trim();
+    // name: tên thật (Fullname), không có thì dùng username
+    String? n = (meta?['full_name'] as String?)?.trim();
+    if (n == null || n.isEmpty) n = u;
+      try {
+        final row = await db
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .maybeSingle();
+        n = (row?['full_name'] as String?)?.trim();
+      } catch (_) {}
+
     if (n == null || n.isEmpty) n = u;
 
     if (u != null && u.isNotEmpty) username = u;
@@ -239,6 +271,7 @@ class _MentalScreenState extends State<MentalScreen> {
 
     try {
       await DailyRecordService().saveRecord(emotion: m);
+      MoodSync.instance.update(m, this);
     } catch (e) {
       // Lưu thất bại thì trả về như cũ
       if (!mounted) return;
@@ -283,7 +316,8 @@ class _MentalScreenState extends State<MentalScreen> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FB),
+      backgroundColor: context.palette.background,
+      extendBody: true,
       body: loading
           ? const Center(child: CircularProgressIndicator()) // đang tải từ Supabase
           : SingleChildScrollView(
@@ -319,10 +353,11 @@ class _MentalScreenState extends State<MentalScreen> {
             title: 'Góc thư giãn - Âm nhạc cho tâm trạng',
             subtitle: suggested == null
                 ? 'Chọn tâm trạng để nhận gợi ý nhạc'
-                : 'Gợi ý nhạc theo tâm trạng ',
+                : 'Gợi ý Playlist nhạc theo tâm trạng ',
             child: Column(children: sorted.map(_songTile).toList()),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 45),
+
         ]),
       ),
     );
@@ -396,7 +431,7 @@ class _MentalScreenState extends State<MentalScreen> {
         margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.palette.card,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -404,10 +439,9 @@ class _MentalScreenState extends State<MentalScreen> {
           children: [
           Text(title,
               textAlign: centerAligned ? TextAlign.center : TextAlign.start,
-              style: const TextStyle(
-                  color: Color(0xFF4C5BD4), fontWeight: FontWeight.bold, fontSize: 18)),
+              style: AppTextStyles.metricValue2,),
           if (subtitle != null)
-            Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(subtitle, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold , fontSize: 11)),
           const SizedBox(height: 12),
           child,
         ]),
@@ -487,13 +521,11 @@ class _MentalScreenState extends State<MentalScreen> {
       borderRadius: BorderRadius.circular(12),
     ),
     child: Row(children: [
-      Container(
-        width: 52, height: 52,
-        decoration: BoxDecoration(
-          color: s.mood.color.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(Icons.music_note),
+      SongCover(
+        spotifyUrl: s.url,
+        size: 52,
+        radius: 8,
+        placeholderColor: s.mood.color.withValues(alpha: 0.3),
       ),
       const SizedBox(width: 8),
       Expanded(

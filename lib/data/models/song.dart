@@ -14,3 +14,4 @@ class Song {
     required this.musicUrl,
   });
 }
+

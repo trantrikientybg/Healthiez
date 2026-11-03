@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^2.0.0
-
+  http: ^1.2.0
 
   # === NHÓM 1: UI & QUẢN LÝ TRẠNG THÁI ===
   provider: ^6.1.2 # Quản lý dữ liệu dùng chung (State Management)

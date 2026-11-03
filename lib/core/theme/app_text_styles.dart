@@ -52,6 +52,12 @@ class AppTextStyles {
     color: BrandColors.purple,
   );
 
+  static const TextStyle metricValue2 = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: BrandColors.purple,
+  );
+
   static const TextStyle ringPercent = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w500,

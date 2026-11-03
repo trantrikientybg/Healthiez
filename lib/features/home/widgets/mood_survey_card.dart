@@ -71,9 +71,12 @@ class MoodSurveyCard extends StatelessWidget {
           const SizedBox(height: 14),
           GestureDetector(
             onTap: onViewMonth,
-            child: const Text(
+            child: Text(
               'Xem lại cảm xúc của bạn tháng này',
-              style: AppTextStyles.link,
+              style: AppTextStyles.link.copyWith(
+                color: palette.textAccent,
+                decorationColor: palette.textAccent,
+              ),
             ),
           ),
         ],
