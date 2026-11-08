@@ -45,6 +45,8 @@ dependencies:
   fl_chart: ^1.2.0 # Vẽ biểu đồ thống kê sức khỏe, calo, giấc ngủ cực đẹp
   flutter_svg: ^2.3.0
   url_launcher: ^6.3.3
+  pedometer: 4.2.0
+  permission_handler: 13.0.2
 
 dev_dependencies:
   flutter_test:
