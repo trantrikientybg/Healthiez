@@ -72,6 +72,27 @@ class AppTextStyles {
     decorationColor: BrandColors.purple,
   );
 
+  static const TextStyle mentalSubtitle = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: BrandColors.navy,
+    decorationColor: BrandColors.navy,
+  );
+
+  static const TextStyle index = TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    color: BrandColors.textPrimary,
+    decorationColor: BrandColors.textPrimary,
+  );
+
+  static const TextStyle happiness = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: BrandColors.textPrimary,
+    decorationColor: BrandColors.textPrimary,
+  );
+
   static const TextStyle ticketTitle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.bold,

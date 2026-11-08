@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+//import 'package:flutter_svg/flutter_svg.dart';
+import 'package:healthiez/shared/widgets/gradient_text.dart';
 import 'mental_data.dart';
 import 'overview_popup.dart';
 import 'package:flutter/material.dart';
@@ -6,8 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:healthiez/core/theme/day_period.dart';
 import 'package:healthiez/core/theme/app_text_styles.dart';
+//import 'package:healthiez/features/home/widgets/greeting_header.dart';
 import 'spotify_cover.dart';
-
 // ============ 1. MODEL ============
 class DailyRecord {
   final DateTime date;
@@ -315,10 +317,9 @@ class _MentalScreenState extends State<MentalScreen> {
               const SizedBox(height: 15),
               Text(
                 today == null ? 'Hãy chọn tâm trạng của bạn': 'Tâm trạng hôm nay: ${today!.label}',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black54,
+                style: AppTextStyles.mentalSubtitle.copyWith(
+                  color: context.palette.textPrimary,
+                  decorationColor: context.palette.textPrimary,
                 ),
               ),
 
@@ -389,7 +390,7 @@ class _MentalScreenState extends State<MentalScreen> {
                 ),
               ),
               GestureDetector(
-                onLongPress: () => showMoodOverview(context, positiveOverview),
+                onTap: () => showMoodOverview(context, overviewOf(logs, DateTime.now()).overviewData),
                 child: overviewImage(logs),
 
               ),
@@ -418,11 +419,17 @@ class _MentalScreenState extends State<MentalScreen> {
         child: Column(
             crossAxisAlignment: centerAligned ? CrossAxisAlignment.center : CrossAxisAlignment.start,
           children: [
-          Text(title,
-              textAlign: centerAligned ? TextAlign.center : TextAlign.start,
-              style: AppTextStyles.metricValue2,),
+          GradientText(title,
+              //textAlign: centerAligned ? TextAlign.center : TextAlign.start,
+              style: AppTextStyles.sectionTitle.copyWith(fontSize: 18),),
           if (subtitle != null)
-            Text(subtitle, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold , fontSize: 11)),
+            Text(subtitle,
+                style : AppTextStyles.mentalSubtitle.copyWith(
+                  color: context.palette.textPrimary,
+                  decorationColor: context.palette.textPrimary,
+                ),
+                //style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold , fontSize: 11)
+            ),
           const SizedBox(height: 12),
           child,
         ]),
@@ -468,8 +475,11 @@ class _MentalScreenState extends State<MentalScreen> {
           child: Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(top == null ? '--' : '${(counts[top]! * 100 / total).round()}%',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              Text(top?.label ?? '', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  style: AppTextStyles.mentalSubtitle.copyWith(fontSize: 22, fontWeight: FontWeight.bold, color : context.palette.textPrimary)),
+              Text(top?.label ?? '', style: AppTextStyles.happiness.copyWith(
+                color : context.palette.textAccent,
+              )
+              ),
             ]),
           ),
         ),
@@ -485,7 +495,10 @@ class _MentalScreenState extends State<MentalScreen> {
                 CircleAvatar(radius: 4, backgroundColor: m.color),
                 const SizedBox(width: 6),
                 Text('${m.label} • ${(counts[m]! * 100 / total).round()}%',
-                    style: const TextStyle(fontSize: 12)),
+                    style: AppTextStyles.index.copyWith(
+                      color : context.palette.textPrimary,
+                      fontSize: 12.5,
+                    )),
               ]),
             );
           }).toList(),
@@ -516,7 +529,7 @@ class _MentalScreenState extends State<MentalScreen> {
           children: [
             Text(s.title, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            Text(s.content, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            Text(s.content, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -533,8 +546,6 @@ class _MentalScreenState extends State<MentalScreen> {
     )
   );
 }
-
-
 
 class _DonutPainter extends CustomPainter { // Tạo chart tròn
   final Map<Mood, int> counts;
