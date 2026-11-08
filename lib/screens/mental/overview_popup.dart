@@ -1,4 +1,4 @@
-import 'mental_screen.dart';
+//import 'mental_screen.dart';
 import 'mental_data.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +13,11 @@ void showMoodOverview(BuildContext context, MoodOverview data) {
   );
 }
 
+String randomQuote(Overview o) {
+  final pool = message.where((m) => m.overview == o).toList();
+  return pool[math.Random().nextInt(pool.length)].content;
+}
+
 class _MoodOverviewDialog extends StatelessWidget {
   final MoodOverview data;
   const _MoodOverviewDialog({required this.data});
@@ -22,7 +27,7 @@ class _MoodOverviewDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -35,14 +40,14 @@ class _MoodOverviewDialog extends StatelessWidget {
                   children: [
                     Container(
                       width: 52,
-                      height: 52,
+                      height: 55,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       // TODO: thay bằng ảnh chiếc lá xuất từ Figma (Image.asset)
-                      child: Icon(Icons.eco, color: data.color, size: 30),
+                      child: Icon(Icons.eco, color: data.color, size: 35),
                     ),
                     const SizedBox(width: 12),
                     Column(
@@ -51,7 +56,7 @@ class _MoodOverviewDialog extends StatelessWidget {
                         const Text(
                           'Tổng quan',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
@@ -59,7 +64,7 @@ class _MoodOverviewDialog extends StatelessWidget {
                         Text(
                           data.status,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 17,
                             fontWeight: FontWeight.w600,
                             color: data.color,
                           ),
@@ -72,7 +77,7 @@ class _MoodOverviewDialog extends StatelessWidget {
                 Text(
                   data.message,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
                     height: 1.35,
                     color: Colors.black87,
@@ -81,15 +86,15 @@ class _MoodOverviewDialog extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
 
           // --- Thẻ 2: Câu trích dẫn ---
           _WhiteCard(
             child: Text(
-              '‘ Text ’',
+              randomQuote(data.overview),
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 height: 1.4,
                 color: Colors.black87,
               ),

@@ -52,6 +52,12 @@ class AppTextStyles {
     color: BrandColors.purple,
   );
 
+  static const TextStyle metricValue2 = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: BrandColors.purple,
+  );
+
   static const TextStyle ringPercent = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w500,
@@ -64,6 +70,27 @@ class AppTextStyles {
     color: BrandColors.purple,
     decoration: TextDecoration.underline,
     decorationColor: BrandColors.purple,
+  );
+
+  static const TextStyle mentalSubtitle = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: BrandColors.navy,
+    decorationColor: BrandColors.navy,
+  );
+
+  static const TextStyle index = TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    color: BrandColors.textPrimary,
+    decorationColor: BrandColors.textPrimary,
+  );
+
+  static const TextStyle happiness = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: BrandColors.textPrimary,
+    decorationColor: BrandColors.textPrimary,
   );
 
   static const TextStyle ticketTitle = TextStyle(
