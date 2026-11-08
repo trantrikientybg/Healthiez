@@ -1,7 +1,15 @@
 import '../../core/utils/date_utils.dart';
+import '../../screens/mental/mental_data.dart' show Mood;
 import '../models/song.dart';
 
 class MusicRepository {
+  /// Playlist theo tâm trạng. TẠM dùng link tìm kiếm của Spotify (mở được ngay);
+  /// thay bằng link playlist thật (dạng https://open.spotify.com/playlist/...).
+  static const Map<Mood, String> playlistUrls = {
+    Mood.happy: 'https://open.spotify.com/search/happy%20vibes',
+    Mood.cry: 'https://open.spotify.com/search/sad%20songs',
+  };
+
   // Tạm thời cả 3 bài dùng chung một ảnh và một link nhạc.
   // Thay 'aaaa' / 'bbbb' bằng link thật (bắt đầu bằng https://).
   static const List<Song> _playlist = [

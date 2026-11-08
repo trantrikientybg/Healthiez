@@ -58,7 +58,10 @@ class _MainShellState extends State<MainShell> {
         ),
       ),
       _KeepAlivePage(
-        child: HomeScreen(onOpenMental: () => _onTabSelected(_mentalIndex)),
+        child: HomeScreen(
+          onOpenMental: () => _onTabSelected(_mentalIndex),
+          onOpenPhysical: () => _onTabSelected(_physicalIndex),
+        ),
       ),
       const _KeepAlivePage(child: mental.MentalScreen()),
     ];
