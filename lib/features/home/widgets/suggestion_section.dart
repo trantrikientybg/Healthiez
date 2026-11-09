@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/brand_colors.dart';
+import '../../../core/theme/day_period.dart';
 import '../../../shared/widgets/section_chip.dart';
 import '../logic/suggestion.dart';
 import 'ticket_card.dart';
 
-/// Mục "Gợi ý hằng ngày": chip tiêu đề + danh sách thẻ vé (tối đa 4).
+/// Mục "Gợi ý hằng ngày": chip tiêu đề + các thẻ vé (tối đa 4).
+/// Thẻ nhạc luôn ở cuối, ngay dưới là ô nhỏ "Xem thêm nhạc".
 class SuggestionSection extends StatelessWidget {
   final List<Suggestion> suggestions;
   final ValueChanged<Suggestion> onTap;
   final ValueChanged<Suggestion> onDismiss;
+  final VoidCallback? onMoreMusic;
 
   const SuggestionSection({
     super.key,
     required this.suggestions,
     required this.onTap,
     required this.onDismiss,
+    this.onMoreMusic,
   });
 
   static const Color _iconColor = Color(0xFFA3AEC2);
@@ -34,25 +38,44 @@ class SuggestionSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        for (final s in suggestions)
+        for (final s in suggestions) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, s.isMusic ? 8 : 12),
             child: TicketCard(
-              title: s.song != null ? 'Bài hát hôm nay' : s.title,
-              subtitle: s.song != null ? '' : s.subtitle,
+              title: s.title,
+              subtitle: s.subtitle,
               isWarning: s.isWarning,
               right: _rightOf(s),
               onTap: () => onTap(s),
-              onDismiss: () => onDismiss(s),
+              // Thẻ nhạc luôn hiện, không có nút ẩn
+              onDismiss: s.isMusic ? null : () => onDismiss(s),
             ),
           ),
+          if (s.isMusic)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: _MoreMusicTile(onTap: onMoreMusic),
+            ),
+        ],
       ],
     );
   }
 
   Widget _rightOf(Suggestion s) {
-    final song = s.song;
-    if (song != null) return _SongCover(title: song.title, artist: song.artist, coverUrl: song.coverUrl);
+    final playlist = s.playlist;
+    if (playlist != null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PlaylistCover(imageUrl: playlist.imageUrl),
+          const SizedBox(height: 8),
+          Text(
+            s.cta,
+            style: AppTextStyles.ticketOnDark.copyWith(fontSize: 14),
+          ),
+        ],
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -74,66 +97,85 @@ class SuggestionSection extends StatelessWidget {
         SuggestionKind.screenTimeWarning => Icons.warning_amber_rounded,
         SuggestionKind.sleep => Icons.bedtime_rounded,
         SuggestionKind.meditation => Icons.self_improvement_rounded,
-        SuggestionKind.happyMusic => Icons.music_note_rounded,
-        SuggestionKind.sadMusic => Icons.music_note_rounded,
         SuggestionKind.run => Icons.directions_run_rounded,
-        SuggestionKind.songOfTheDay => Icons.music_note_rounded,
+        SuggestionKind.music => Icons.music_note_rounded,
       };
 }
 
-class _SongCover extends StatelessWidget {
-  final String title;
-  final String artist;
-  final String coverUrl;
+/// Ảnh bìa playlist. Chưa có link ảnh thật (hoặc tải lỗi) thì hiện hình nốt nhạc.
+class _PlaylistCover extends StatelessWidget {
+  final String imageUrl;
+  const _PlaylistCover({required this.imageUrl});
 
-  const _SongCover({
-    required this.title,
-    required this.artist,
-    required this.coverUrl,
-  });
+  static const double size = 72;
 
   @override
   Widget build(BuildContext context) {
     final placeholder = Container(
-      width: 64,
-      height: 64,
+      width: size,
+      height: size,
       color: const Color(0xFF2E3B52),
-      child: const Icon(Icons.music_note_rounded, color: SuggestionSection._iconColor),
+      child: const Icon(
+        Icons.library_music_rounded,
+        size: 32,
+        color: SuggestionSection._iconColor,
+      ),
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: coverUrl.startsWith('http')
-              ? Image.network(
-                  coverUrl,
-                  width: 64,
-                  height: 64,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => placeholder,
-                )
-              : placeholder, // chưa có link thật (đang là chỗ giữ chỗ)
-        ),
-        const SizedBox(height: 6),
-        Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.ticketOnDark.copyWith(fontSize: 13),
-        ),
-        Text(
-          artist,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: BrandColors.textOnDark,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: imageUrl.startsWith('http')
+          ? Image.network(
+              imageUrl,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => placeholder,
+            )
+          : placeholder,
+    );
+  }
+}
+
+/// Ô nhỏ dưới thẻ nhạc: bấm để sang phần nhạc đầy đủ ở tab Tinh thần.
+class _MoreMusicTile extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _MoreMusicTile({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Material(
+      color: palette.card,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.library_music_rounded,
+                size: 22,
+                color: BrandColors.purple,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Xem thêm nhạc cho tâm trạng của bạn',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: palette.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: palette.textPrimary),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

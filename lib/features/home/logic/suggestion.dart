@@ -1,13 +1,11 @@
-import '../../../data/models/song.dart';
+import '../../../data/models/music_playlist.dart';
 
 enum SuggestionKind {
   screenTimeWarning,
   sleep,
   meditation,
-  happyMusic,
-  sadMusic,
   run,
-  songOfTheDay,
+  music, // luôn có, luôn đứng cuối
 }
 
 /// Việc xảy ra khi người dùng bấm vào thẻ.
@@ -16,7 +14,7 @@ enum SuggestionAction {
   openSleep,       // màn Chế độ ngủ (làm ở bước sau)
   openMeditation,  // màn Thiền (làm ở bước sau)
   openPhysicalTab, // chuyển sang tab Thể chất
-  openUrl,         // mở link (playlist, bài hát) bằng app ngoài
+  openUrl,         // mở link bằng app ngoài (Spotify)
 }
 
 class Suggestion {
@@ -27,7 +25,7 @@ class Suggestion {
   final SuggestionAction action;
   final String? url;
   final String? message;
-  final Song? song;
+  final MusicPlaylist? playlist; // chỉ có ở thẻ nhạc
 
   const Suggestion({
     required this.kind,
@@ -37,11 +35,12 @@ class Suggestion {
     required this.action,
     this.url,
     this.message,
-    this.song,
+    this.playlist,
   });
 
   /// Mỗi loại thẻ chỉ xuất hiện một lần trong ngày -> dùng làm id để "ẩn hôm nay".
   String get id => kind.name;
 
   bool get isWarning => kind == SuggestionKind.screenTimeWarning;
+  bool get isMusic => kind == SuggestionKind.music;
 }

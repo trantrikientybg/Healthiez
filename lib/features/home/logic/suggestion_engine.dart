@@ -1,8 +1,9 @@
 import '../../../core/constants/app_constants.dart';
+import '../../../data/models/music_playlist.dart';
 import '../../../data/models/screen_time_record.dart';
 import '../../../data/models/sleep_record.dart';
-import '../../../data/models/song.dart';
 import '../../../data/models/step_record.dart';
+import '../../../data/repositories/music_repository.dart';
 import '../../../screens/mental/mental_data.dart' show Mood;
 import 'suggestion.dart';
 
@@ -14,9 +15,8 @@ class SuggestionInput {
   final ScreenTimeRecord? screenTime;
 
   /// Tâm trạng đã ghi nhận trong những ngày gần nhất (cũ -> mới).
+  /// Phần tử cuối là tâm trạng mới nhất, dùng để chọn nhóm nhạc.
   final List<Mood> recentMoods;
-  final Song? songOfTheDay;
-  final Map<Mood, String> playlistUrls;
 
   const SuggestionInput({
     required this.now,
@@ -24,15 +24,15 @@ class SuggestionInput {
     this.sleep,
     this.screenTime,
     this.recentMoods = const [],
-    this.songOfTheDay,
-    this.playlistUrls = const {},
   });
 }
 
 /// Bộ luật gợi ý: hàm thuần túy (không đọc DB, không dùng giờ hệ thống),
 /// nên dễ kiểm thử và chỉnh ngưỡng trong AppConstants.
 ///
-/// Thứ tự ưu tiên: cảnh báo dùng máy > đi ngủ > tâm trạng > đi bộ > bài hát trong ngày.
+/// Các thẻ luật (tối đa maxSuggestions - 1), theo thứ tự ưu tiên:
+///   cảnh báo dùng máy > đi ngủ > thiền (tức giận) > đi bộ.
+/// Thẻ nhạc luôn có và luôn đứng cuối.
 class SuggestionEngine {
   SuggestionEngine._();
 
@@ -43,7 +43,7 @@ class SuggestionEngine {
     final rules = <Suggestion?>[
       _screenTime(input),
       _sleep(input),
-      _mood(input),
+      _meditation(input),
       _steps(input),
     ];
 
@@ -51,24 +51,10 @@ class SuggestionEngine {
     final cards = <Suggestion>[
       for (final s in rules)
         if (s != null && !dismissed.contains(s.id)) s,
-    ];
+    ].take(AppConstants.maxSuggestions - 1).toList();
 
-    // Bài hát trong ngày chỉ lấp chỗ trống còn lại.
-    final song = input.songOfTheDay;
-    if (cards.length < AppConstants.maxSuggestions && song != null) {
-      final card = Suggestion(
-        kind: SuggestionKind.songOfTheDay,
-        title: song.title,
-        subtitle: song.artist,
-        cta: 'Nghe bài hát',
-        action: SuggestionAction.openUrl,
-        url: song.musicUrl,
-        song: song,
-      );
-      if (!dismissed.contains(card.id)) cards.add(card);
-    }
-
-    return cards.take(AppConstants.maxSuggestions).toList();
+    cards.add(_music(input));
+    return cards;
   }
 
   // ---------------- Từng luật ----------------
@@ -106,45 +92,22 @@ class SuggestionEngine {
 
   /// Tâm trạng xu hướng: tất cả ngày đã ghi nhận gần đây giống nhau.
   static Mood? moodTrend(List<Mood> recent) {
-    if (recent.length < AppConstants.moodTrendMinEntries || recent.isEmpty) {
+    if (recent.isEmpty || recent.length < AppConstants.moodTrendMinEntries) {
       return null;
     }
     final first = recent.first;
     return recent.every((m) => m == first) ? first : null;
   }
 
-  static Suggestion? _mood(SuggestionInput i) {
-    final trend = moodTrend(i.recentMoods);
-    switch (trend) {
-      case Mood.angry:
-        return const Suggestion(
-          kind: SuggestionKind.meditation,
-          title: 'Thiền vài phút nhé',
-          subtitle: 'Mấy hôm nay bạn có vẻ hơi bực bội. Thử hít thở sâu xem sao',
-          cta: 'Mở đồng hồ thiền',
-          action: SuggestionAction.openMeditation,
-        );
-      case Mood.happy:
-        return Suggestion(
-          kind: SuggestionKind.happyMusic,
-          title: 'Nghe nhạc vui cho thêm năng lượng',
-          subtitle: 'Mấy hôm nay bạn đang rất vui',
-          cta: 'Mở playlist',
-          action: SuggestionAction.openUrl,
-          url: i.playlistUrls[Mood.happy],
-        );
-      case Mood.cry:
-        return Suggestion(
-          kind: SuggestionKind.sadMusic,
-          title: 'Một chút nhạc cho dịu lòng',
-          subtitle: 'Mấy hôm nay bạn có vẻ hơi buồn',
-          cta: 'Mở playlist',
-          action: SuggestionAction.openUrl,
-          url: i.playlistUrls[Mood.cry],
-        );
-      default:
-        return null;
-    }
+  static Suggestion? _meditation(SuggestionInput i) {
+    if (moodTrend(i.recentMoods) != Mood.angry) return null;
+    return const Suggestion(
+      kind: SuggestionKind.meditation,
+      title: 'Thiền vài phút nhé',
+      subtitle: 'Mấy hôm nay bạn có vẻ hơi bực bội. Thử hít thở sâu xem sao',
+      cta: 'Mở đồng hồ thiền',
+      action: SuggestionAction.openMeditation,
+    );
   }
 
   /// Tiến độ bước chân "nên có" theo giờ trong ngày (0.0 - 1.0).
@@ -167,6 +130,26 @@ class SuggestionEngine {
       subtitle: 'Bạn còn thiếu ${s.goal - s.steps} bước so với mục tiêu',
       cta: 'Mở tab Thể chất',
       action: SuggestionAction.openPhysicalTab,
+    );
+  }
+
+  /// Thẻ nhạc: nhóm nhạc theo tâm trạng mới nhất (không có thì nhạc thịnh hành).
+  static Suggestion _music(SuggestionInput i) {
+    final mood = i.recentMoods.isEmpty ? null : i.recentMoods.last;
+    final playlist = MusicRepository.playlistForMood(mood);
+    final reason = switch (playlist.group) {
+      MusicGroup.energetic => 'Hợp với tâm trạng vui của bạn',
+      MusicGroup.gentle => 'Nhạc nhẹ nhàng để lòng dịu lại',
+      MusicGroup.trending => 'Playlist thịnh hành, tự cập nhật mỗi ngày',
+    };
+    return Suggestion(
+      kind: SuggestionKind.music,
+      title: playlist.name,
+      subtitle: reason,
+      cta: 'Nghe ngay',
+      action: SuggestionAction.openUrl,
+      url: playlist.musicUrl,
+      playlist: playlist,
     );
   }
 }

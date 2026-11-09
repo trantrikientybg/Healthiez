@@ -5,19 +5,18 @@ import '../../core/theme/day_period.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/models/screen_time_record.dart';
 import '../../data/models/sleep_record.dart';
-import '../../data/models/song.dart';
 import '../../data/models/step_record.dart';
 import '../../data/models/streak.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/repositories/activity_repository.dart';
 import '../../data/repositories/mood_repository.dart';
 import '../../data/repositories/mood_sync.dart';
-import '../../data/repositories/music_repository.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../screens/mental/mental_data.dart' show Mood;
 import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/section_chip.dart';
 import '../../shared/widgets/theme_debug_switcher.dart';
+import '../meditation/meditation_screen.dart';
 import 'logic/suggestion.dart';
 import 'logic/suggestion_dismiss_store.dart';
 import 'logic/suggestion_engine.dart';
@@ -44,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final UserRepository _userRepo = UserRepository();
   final ActivityRepository _activityRepo = ActivityRepository();
   final MoodRepository _moodRepo = MoodRepository();
-  final MusicRepository _musicRepo = MusicRepository();
   final SuggestionDismissStore _dismissStore = SuggestionDismissStore();
 
   UserProfile? _profile;
@@ -54,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
   ScreenTimeRecord? _screenTime;
   Mood? _mood; // tâm trạng hôm nay
   Map<DateTime, Mood> _moodHistory = {};
-  Song? _song;
   Set<String> _dismissed = {};
 
   /// Để thử các luật theo giờ, tạm đổi thành ví dụ DateTime(2026, 11, 5, 23).
@@ -89,7 +86,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenF = _activityRepo.getTodayScreenTime();
     final moodF = _moodRepo.getToday();
     final historyF = _moodRepo.getRecent(days: AppConstants.moodTrendDays);
-    final songF = _musicRepo.getSongOfTheDay();
     final dismissedF = _dismissStore.load(_now());
 
     final profile = await profileF;
@@ -99,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final screen = await screenF;
     final mood = await moodF;
     final history = await historyF;
-    final song = await songF;
     final dismissed = await dismissedF;
 
     if (!mounted) return;
@@ -111,7 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _screenTime = screen;
       _mood = mood;
       _moodHistory = history;
-      _song = song;
       _dismissed = dismissed;
     });
   }
@@ -148,8 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
         sleep: _sleep,
         screenTime: _screenTime,
         recentMoods: _recentMoods(now),
-        songOfTheDay: _song,
-        playlistUrls: MusicRepository.playlistUrls,
       ),
       dismissed: _dismissed,
     );
@@ -163,8 +155,11 @@ class _HomeScreenState extends State<HomeScreen> {
         await _openUrl(s.url);
       case SuggestionAction.showMessage:
         _toast(s.message ?? s.title);
-      case SuggestionAction.openSleep:
       case SuggestionAction.openMeditation:
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const MeditationScreen()),
+        );
+      case SuggestionAction.openSleep:
         _toast('Tính năng này đang được phát triển, sắp ra mắt nhé!');
     }
   }
@@ -236,6 +231,8 @@ class _HomeScreenState extends State<HomeScreen> {
               suggestions: _suggestions(),
               onTap: _onSuggestionTap,
               onDismiss: _onSuggestionDismiss,
+              // Ô nhỏ dưới thẻ nhạc -> phần nhạc đầy đủ ở tab Tinh thần
+              onMoreMusic: widget.onOpenMental,
             ),
             const SizedBox(height: 12),
             const ThemeDebugSwitcher(), // TẠM: xóa khi có Settings

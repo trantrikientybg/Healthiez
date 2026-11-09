@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:healthiez/data/models/music_playlist.dart';
 import 'package:healthiez/data/models/screen_time_record.dart';
 import 'package:healthiez/data/models/sleep_record.dart';
-import 'package:healthiez/data/models/song.dart';
 import 'package:healthiez/data/models/step_record.dart';
 import 'package:healthiez/features/home/logic/suggestion.dart';
 import 'package:healthiez/features/home/logic/suggestion_engine.dart';
@@ -23,20 +23,27 @@ void main() {
   ScreenTimeRecord screen(int minutes) =>
       ScreenTimeRecord(date: day, minutes: minutes, limitMinutes: 240);
 
-  const song = Song(title: 'A', artist: 'B', coverUrl: '', musicUrl: 'https://x.y');
-  const urls = {Mood.happy: 'https://happy', Mood.cry: 'https://sad'};
+  List<Suggestion> run(SuggestionInput i, {Set<String> dismissed = const {}}) =>
+      SuggestionEngine.build(i, dismissed: dismissed);
 
   List<SuggestionKind> kinds(SuggestionInput i, {Set<String> dismissed = const {}}) =>
-      SuggestionEngine.build(i, dismissed: dismissed).map((s) => s.kind).toList();
+      run(i, dismissed: dismissed).map((s) => s.kind).toList();
 
-  test('dùng máy trên 4 tiếng: cảnh báo luôn đứng đầu', () {
+  Suggestion music(SuggestionInput i) =>
+      run(i).firstWhere((s) => s.kind == SuggestionKind.music);
+
+  test('không có luật nào: chỉ còn thẻ nhạc', () {
+    expect(kinds(SuggestionInput(now: DateTime(2026, 11, 5, 12))),
+        [SuggestionKind.music]);
+  });
+
+  test('dùng máy trên 4 tiếng: cảnh báo đứng đầu, nhạc đứng cuối', () {
     final out = kinds(SuggestionInput(
       now: DateTime(2026, 11, 5, 15),
       screenTime: screen(260),
-      recentMoods: const [Mood.happy, Mood.happy],
-      playlistUrls: urls,
     ));
     expect(out.first, SuggestionKind.screenTimeWarning);
+    expect(out.last, SuggestionKind.music);
   });
 
   test('dùng máy đúng 4 tiếng: chưa cảnh báo', () {
@@ -67,38 +74,14 @@ void main() {
     expect(out, contains(SuggestionKind.meditation));
   });
 
-  test('vui liên tiếp: playlist vui kèm link', () {
-    final list = SuggestionEngine.build(SuggestionInput(
-      now: DateTime(2026, 11, 5, 12),
-      recentMoods: const [Mood.happy, Mood.happy],
-      playlistUrls: urls,
-    ));
-    final s = list.firstWhere((e) => e.kind == SuggestionKind.happyMusic);
-    expect(s.url, 'https://happy');
-  });
-
-  test('buồn liên tiếp: playlist nhẹ nhàng', () {
-    final out = kinds(SuggestionInput(
-      now: DateTime(2026, 11, 5, 12),
-      recentMoods: const [Mood.cry],
-      playlistUrls: urls,
-    ));
-    expect(out, contains(SuggestionKind.sadMusic));
-  });
-
-  test('tâm trạng lẫn lộn hoặc bình thường: không gợi ý theo tâm trạng', () {
-    final mixed = kinds(SuggestionInput(
-      now: DateTime(2026, 11, 5, 12),
-      recentMoods: const [Mood.happy, Mood.angry],
-    ));
-    final neutral = kinds(SuggestionInput(
-      now: DateTime(2026, 11, 5, 12),
-      recentMoods: const [Mood.neutral, Mood.neutral],
-    ));
-    for (final out in [mixed, neutral]) {
+  test('tâm trạng lẫn lộn hoặc không tức giận: không gợi ý thiền', () {
+    for (final moods in [
+      const [Mood.happy, Mood.angry],
+      const [Mood.cry, Mood.cry],
+      const [Mood.neutral],
+    ]) {
+      final out = kinds(SuggestionInput(now: DateTime(2026, 11, 5, 12), recentMoods: moods));
       expect(out, isNot(contains(SuggestionKind.meditation)));
-      expect(out, isNot(contains(SuggestionKind.happyMusic)));
-      expect(out, isNot(contains(SuggestionKind.sadMusic)));
     }
   });
 
@@ -117,33 +100,71 @@ void main() {
     expect(out, isNot(contains(SuggestionKind.run)));
   });
 
-  test('tối đa 4 thẻ và bài hát chỉ lấp chỗ trống', () {
+  test('nhóm nhạc theo tâm trạng mới nhất', () {
+    MusicGroup groupOf(List<Mood> moods) => music(
+          SuggestionInput(now: DateTime(2026, 11, 5, 12), recentMoods: moods),
+        ).playlist!.group;
+
+    expect(groupOf(const [Mood.happy]), MusicGroup.energetic);
+    expect(groupOf(const [Mood.neutral]), MusicGroup.trending);
+    expect(groupOf(const []), MusicGroup.trending); // chưa chọn tâm trạng
+    expect(groupOf(const [Mood.angry]), MusicGroup.gentle);
+    expect(groupOf(const [Mood.cry]), MusicGroup.gentle);
+    expect(groupOf(const [Mood.tired]), MusicGroup.gentle);
+    // Hôm qua vui, hôm nay buồn -> theo hôm nay
+    expect(groupOf(const [Mood.happy, Mood.cry]), MusicGroup.gentle);
+  });
+
+  test('thẻ nhạc kèm link playlist của nhóm', () {
+    final s = music(SuggestionInput(
+      now: DateTime(2026, 11, 5, 12),
+      recentMoods: const [Mood.happy],
+    ));
+    expect(s.action, SuggestionAction.openUrl);
+    expect(s.url, s.playlist!.musicUrl);
+  });
+
+  test('tối đa 4 thẻ: 3 thẻ luật + thẻ nhạc luôn ở cuối', () {
     final out = kinds(SuggestionInput(
       now: DateTime(2026, 11, 5, 23),
       screenTime: screen(300),
       sleep: sleep(5),
       steps: steps(1000),
       recentMoods: const [Mood.angry],
-      songOfTheDay: song,
     ));
-    expect(out.length, 4);
-    expect(out, isNot(contains(SuggestionKind.songOfTheDay)));
+    // 4 luật cùng thỏa nhưng chỉ lấy 3 luật ưu tiên cao nhất
+    expect(out, [
+      SuggestionKind.screenTimeWarning,
+      SuggestionKind.sleep,
+      SuggestionKind.meditation,
+      SuggestionKind.music,
+    ]);
   });
 
-  test('không có luật nào: chỉ hiện bài hát trong ngày', () {
-    final out = kinds(SuggestionInput(now: DateTime(2026, 11, 5, 12), songOfTheDay: song));
-    expect(out, [SuggestionKind.songOfTheDay]);
-  });
-
-  test('thẻ đã ẩn bị bỏ và thẻ khác lấp chỗ', () {
+  test('thẻ đã ẩn bị bỏ và thẻ ưu tiên thấp hơn lấp chỗ', () {
     final out = kinds(
       SuggestionInput(
-        now: DateTime(2026, 11, 5, 15),
+        now: DateTime(2026, 11, 5, 23),
         screenTime: screen(300),
-        songOfTheDay: song,
+        sleep: sleep(5),
+        steps: steps(1000),
+        recentMoods: const [Mood.angry],
       ),
       dismissed: {'screenTimeWarning'},
     );
-    expect(out, [SuggestionKind.songOfTheDay]);
+    expect(out, [
+      SuggestionKind.sleep,
+      SuggestionKind.meditation,
+      SuggestionKind.run,
+      SuggestionKind.music,
+    ]);
+  });
+
+  test('thẻ nhạc không thể bị ẩn', () {
+    final out = kinds(
+      SuggestionInput(now: DateTime(2026, 11, 5, 12)),
+      dismissed: {'music'},
+    );
+    expect(out, [SuggestionKind.music]);
   });
 }
