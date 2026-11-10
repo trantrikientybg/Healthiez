@@ -1,131 +1,81 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 
-const physicalPurple = Color(0xFF6844FF);
-const physicalBlue = Color(0xFF229FFE);
-const physicalBackground = Color(0xFFF8FAFC);
+import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/brand_colors.dart';
+import '../../core/theme/day_period.dart';
+import '../../shared/widgets/gradient_text.dart';
 
-ThemeData physicalTheme(ThemeData base) {
+/// Material overrides so forms, cards and buttons follow the Home period palette.
+ThemeData physicalTheme(ThemeData base, PeriodPalette palette) {
+  final dark = palette.textPrimary.computeLuminance() > 0.5;
   final scheme = ColorScheme.fromSeed(
-    seedColor: physicalPurple,
-    brightness: Brightness.light,
-  ).copyWith(primary: physicalPurple, secondary: physicalBlue);
+    seedColor: BrandColors.purple,
+    brightness: dark ? Brightness.dark : Brightness.light,
+  ).copyWith(primary: BrandColors.purple, secondary: BrandColors.blue);
+  final rounded = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(20),
+    borderSide: BorderSide.none,
+  );
   return base.copyWith(
     colorScheme: scheme,
-    scaffoldBackgroundColor: physicalBackground,
-    textTheme: ThemeData.light().textTheme.apply(
-      bodyColor: const Color(0xFF1E293B),
-      displayColor: const Color(0xFF1E293B),
+    textTheme: (dark ? ThemeData.dark() : ThemeData.light()).textTheme.apply(
+      bodyColor: palette.textPrimary,
+      displayColor: palette.textPrimary,
     ),
     cardTheme: CardThemeData(
-      color: Colors.white,
+      color: palette.card,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: Color(0xFFE9E6F4)),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFFF4F2F6),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(color: physicalPurple, width: 2),
+      fillColor: palette.chip,
+      labelStyle: TextStyle(color: palette.textPrimary),
+      border: rounded,
+      enabledBorder: rounded,
+      focusedBorder: rounded.copyWith(
+        borderSide: const BorderSide(color: BrandColors.purple, width: 2),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: physicalPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: BrandColors.purple,
+        foregroundColor: BrandColors.textOnDark,
         minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: const StadiumBorder(),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: physicalPurple),
+      style: TextButton.styleFrom(foregroundColor: palette.textAccent),
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: physicalBlue,
-      linearTrackColor: Color(0xFFE7EEFF),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: BrandColors.blue,
+      linearTrackColor: palette.ringTrack,
       linearMinHeight: 8,
-      borderRadius: BorderRadius.all(Radius.circular(12)),
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
     ),
   );
 }
 
-class PhysicalHeader extends StatelessWidget {
-  const PhysicalHeader({super.key});
+/// Icon bubble + gradient title, shared by the physical cards.
+class PhysicalCardTitle extends StatelessWidget {
+  const PhysicalCardTitle(this.icon, this.title, {super.key});
+
+  final IconData icon;
+  final String title;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(24),
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [physicalPurple, physicalBlue],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+  Widget build(BuildContext context) => Row(
+    children: [
+      CircleAvatar(
+        backgroundColor: BrandColors.purple.withValues(alpha: 0.15),
+        child: Icon(icon, color: context.palette.textAccent),
       ),
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24),
-        topRight: Radius.circular(24),
-        bottomLeft: Radius.circular(40),
-        bottomRight: Radius.circular(24),
-      ),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(Icons.favorite_border, color: Colors.white),
-            SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                'Healthiez',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Sức khỏe thể chất',
-          style: Theme.of(context).textTheme.headlineSmall
-              ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Theo dõi chỉ số cơ thể, lượng nước và bước chân mỗi ngày.',
-          style: TextStyle(color: Colors.white, height: 1.5),
-        ),
-      ],
-    ),
+      const SizedBox(width: 12),
+      Flexible(child: GradientText(title, style: AppTextStyles.sectionTitle)),
+    ],
   );
 }
-
-@Preview(name: 'Physical header', size: Size(360, 280))
-@Preview(
-  name: 'Physical header · large text',
-  size: Size(320, 400),
-  textScaleFactor: 1.5,
-)
-Widget physicalHeaderPreview() => MaterialApp(
-  theme: physicalTheme(ThemeData.light()),
-  home: const Scaffold(
-    body: Padding(padding: EdgeInsets.all(16), child: PhysicalHeader()),
-  ),
-);

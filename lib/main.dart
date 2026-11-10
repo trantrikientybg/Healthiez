@@ -1,139 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'features/physical/physical_screen.dart';
-import 'features/physical/physical_store.dart';
+import 'constants/app_colors.dart';
+import 'navigation/main_shell.dart';
+import 'screens/auth/code_confirmation_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
+import 'screens/auth/welcome_screen.dart';
+import 'services/auth_service.dart';
+// flutter run -d emulator-5554 --dart-define-from-file=supabase.local.json
+// Khóa Supabase KHÔNG ghi cứng trong code, truyền qua:
+//   --dart-define-from-file=supabase.local.json
+// (copy từ supabase.example.json, file local nằm trong .gitignore)
+const String _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const String _supabaseKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
 
 Future<void> main() async {
   // Đảm bảo Flutter binding đã được khởi tạo trước khi gọi native code
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Khởi tạo Supabase
-  const url = String.fromEnvironment('SUPABASE_URL');
-  const key = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-  if (!url.startsWith('https://') || !key.startsWith('sb_publishable_')) {
-    throw StateError(
-      'Pass a Supabase URL and publishable key with --dart-define-from-file.',
-    );
+  // Thiếu cấu hình thì báo rõ trên màn hình, không để app đứng ở logo Flutter
+  if (!_supabaseUrl.startsWith('https://') ||
+      !_supabaseKey.startsWith('sb_publishable_')) {
+    runApp(const _ConfigErrorApp());
+    return;
   }
-  await Supabase.initialize(url: url, publishableKey: key);
 
-  runApp(HealthiezApp(client: Supabase.instance.client));
+  // Load bảng màu động từ tệp JSON
+  await AppColors.loadFromPath();
+
+  // Khởi tạo Supabase
+  await Supabase.initialize(url: _supabaseUrl, publishableKey: _supabaseKey);
+
+  // Kiểm tra trạng thái đăng nhập từ trước
+  final bool isLoggedIn = await AuthService.isLoggedIn();
+
+  runApp(HealthiezApp(isLoggedIn: isLoggedIn));
 }
 
 class HealthiezApp extends StatelessWidget {
-  const HealthiezApp({super.key, this.client});
+  final bool isLoggedIn;
 
-  final SupabaseClient? client;
+  const HealthiezApp({
+    super.key,
+    this.isLoggedIn = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Healthiez',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6844FF)),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         useMaterial3: true,
       ),
-      home: MainSkeleton(client: client),
-      debugShowCheckedModeBanner: false, // Ẩn chữ Debug góc phải
+      // Đã đăng nhập thì vào thẳng MainShell, ngược lại là WelcomeScreen
+      home: isLoggedIn ? const MainShell() : const WelcomeScreen(),
+      routes: {
+        '/welcome': (context) => const WelcomeScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/code-confirmation': (context) => const CodeConfirmationScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
+        '/main': (context) => const MainShell(),
+      },
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class MainSkeleton extends StatefulWidget {
-  const MainSkeleton({super.key, this.client});
-
-  final SupabaseClient? client;
+/// Hiện khi chạy mà thiếu --dart-define-from-file.
+class _ConfigErrorApp extends StatelessWidget {
+  const _ConfigErrorApp();
 
   @override
-  State<MainSkeleton> createState() => _MainSkeletonState();
-}
-
-class _MainSkeletonState extends State<MainSkeleton> {
-  int _currentIndex = 1; // Mặc định mở Tab 2 (Tổng thể) ở giữa
-
-  // Danh sách các màn hình (Placeholder)
-  List<Widget> get _screens => [
-    if (widget.client case final client?)
-      StreamBuilder<AuthState>(
-        stream: client.auth.onAuthStateChange,
-        builder: (context, _) => PhysicalScreen(
-          key: ValueKey(client.auth.currentUser?.id),
-          active: _currentIndex == 0,
-          store: client.auth.currentUser == null
-              ? null
-              : PhysicalStore(client, client.auth.currentUser!.id),
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(
+            child: Text(
+              'Thiếu cấu hình Supabase.\n\n'
+              '1. Copy supabase.example.json thành supabase.local.json '
+              'và điền URL + publishable key.\n'
+              '2. Chạy lại với:\n'
+              '--dart-define-from-file=supabase.local.json',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
         ),
-      )
-    else
-      PhysicalScreen(active: _currentIndex == 0),
-    const HomeScreen(),
-    const MentalScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // Dùng IndexedStack để giữ nguyên trạng thái (State) của các Tab khi chuyển qua lại
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (int index) {
-          setState(() {
-            _currentIndex = index; // Cập nhật vị trí Tab khi người dùng bấm
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.favorite_border),
-            selectedIcon: Icon(Icons.favorite),
-            label: 'Thể chất',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Tổng thể',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.psychology_outlined),
-            selectedIcon: Icon(Icons.psychology),
-            label: 'Tinh thần',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==============================================================
-// CÁC PLACEHOLDER - CHỖ TRỐNG ĐỂ CHIA VIỆC CHO TEAM
-// ==============================================================
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'TAB 2: TRANG CHỦ\n(Avatar cơ thể, Streak, Thông số tổng quan)',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}
-
-class MentalScreen extends StatelessWidget {
-  const MentalScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'TAB 3: TINH THẦN\n(Chat AI tâm lý, Gợi ý nhạc & Sách)',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/day_period.dart';
+import '../../shared/widgets/progress_ring.dart';
+import 'physical_style.dart';
 import 'step_controller.dart';
 
 class StepCard extends StatelessWidget {
@@ -16,16 +21,39 @@ class StepCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Bước chân hôm nay',
-              style: Theme.of(context).textTheme.titleLarge,
+            const PhysicalCardTitle(Icons.directions_walk, 'Bước chân hôm nay'),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                ProgressRing(
+                  percent: (controller.steps / AppConstants.stepGoal).clamp(
+                    0.0,
+                    1.0,
+                  ),
+                  size: 92,
+                  strokeWidth: 15,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${controller.steps} bước',
+                        style: AppTextStyles.metricValue.copyWith(
+                          color: context.palette.textAccent,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Mục tiêu: ${AppConstants.stepGoal} bước mỗi ngày.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            Text(
-              '${controller.steps} bước',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
             const Text(
               'Bắt đầu theo dõi để ghi nhận bước chân bằng điện thoại. Số bước có thể cập nhật trễ.',
             ),

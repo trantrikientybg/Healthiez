@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:healthiez/core/theme/day_period.dart';
 import 'package:healthiez/features/physical/step_card.dart';
 import 'package:healthiez/features/physical/step_controller.dart';
 
@@ -18,6 +19,7 @@ void main() {
     await controller.load();
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(extensions: const [PeriodPalette.morning]),
         home: Scaffold(body: StepCard(controller: controller)),
       ),
     );
@@ -55,6 +57,7 @@ void main() {
       await controller.load();
       await tester.pumpWidget(
         MaterialApp(
+          theme: ThemeData(extensions: const [PeriodPalette.morning]),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: const TextScaler.linear(1.5)),

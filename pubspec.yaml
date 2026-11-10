@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^2.0.0
+  http: ^1.2.0
 
   # === NHÓM 1: UI & QUẢN LÝ TRẠNG THÁI ===
   provider: ^6.1.2 # Quản lý dữ liệu dùng chung (State Management)
@@ -38,13 +39,16 @@ dependencies:
 
   # === NHÓM 2: DỮ LIỆU & BACKEND ===
   supabase_flutter: ^2.6.0 # Hệ thống Database + Đăng nhập (Thay thế Firebase theo chuẩn GDG)
-  shared_preferences: ^2.3.2 # Lưu các cài đặt nhỏ dưới máy (như trạng thái đăng nhập)
+  shared_preferences: ^2.5.6 # Lưu các cài đặt nhỏ dưới máy (như trạng thái đăng nhập)
 
   # === NHÓM 3: TÍNH NĂNG "KILLER" & MỞ RỘNG ===
   google_generative_ai: ^0.4.3 # Tích hợp Gemini AI làm Trợ lý tâm lý
   fl_chart: ^1.2.0 # Vẽ biểu đồ thống kê sức khỏe, calo, giấc ngủ cực đẹp
-  pedometer: ^4.2.0
-  permission_handler: ^13.0.2
+  flutter_svg: ^2.3.2
+  url_launcher: ^6.3.3
+  pedometer: 4.2.0
+  permission_handler: 13.0.2
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +71,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/sounds/
+    - assets/icons/
+    - assets/images/
+    - assets/colors/
+    - assets/images/Mood/
+    - assets/images/Overview/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
