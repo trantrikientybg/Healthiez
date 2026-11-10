@@ -3,6 +3,7 @@ import '../../../data/models/music_playlist.dart';
 import '../../../data/models/screen_time_record.dart';
 import '../../../data/models/sleep_record.dart';
 import '../../../data/models/step_record.dart';
+import '../../../data/sleep/sleep_models.dart' show SleepDay;
 import '../../../data/repositories/music_repository.dart';
 import '../../../screens/mental/mental_data.dart' show Mood;
 import 'suggestion.dart';
@@ -12,6 +13,10 @@ class SuggestionInput {
   final DateTime now;
   final StepRecord? steps;
   final SleepRecord? sleep;
+
+  /// Đã đọc xong dữ liệu giấc ngủ chưa. Đọc xong mà sleep == null nghĩa là
+  /// chưa có dữ liệu (chưa từng dùng chế độ ngủ).
+  final bool sleepLoaded;
   final ScreenTimeRecord? screenTime;
 
   /// Tâm trạng đã ghi nhận trong những ngày gần nhất (cũ -> mới).
@@ -22,6 +27,7 @@ class SuggestionInput {
     required this.now,
     this.steps,
     this.sleep,
+    this.sleepLoaded = true,
     this.screenTime,
     this.recentMoods = const [],
   });
@@ -74,17 +80,36 @@ class SuggestionEngine {
     );
   }
 
+  /// Thẻ đi ngủ: LUÔN hiện trong khung giờ đi ngủ (để người dùng luôn có lối vào
+  /// chế độ ngủ và đo được giấc ngủ), chỉ đổi lời nhắn theo giấc ngủ đêm trước.
+  /// Không hiện nếu tối nay đã ngủ rồi.
   static Suggestion? _sleep(SuggestionInput i) {
-    final s = i.sleep;
-    if (s == null || s.hours >= AppConstants.sleepEnoughHours) return null;
+    if (!i.sleepLoaded) return null; // đang tải thì chưa gợi ý
     final h = i.now.hour;
     final inWindow = h >= AppConstants.sleepSuggestFromHour ||
         h < AppConstants.sleepSuggestUntilHour;
     if (!inWindow) return null;
+
+    final s = i.sleep;
+    // Giấc ngủ gần nhất thuộc chính "ngày ngủ" hiện tại = tối nay đã ngủ rồi
+    if (s != null && SleepDay.of(s.date) == SleepDay.of(i.now)) return null;
+
+    if (s != null && s.hours >= AppConstants.sleepEnoughHours) {
+      return Suggestion(
+        kind: SuggestionKind.sleep,
+        title: 'Sắp đến giờ đi ngủ rồi',
+        subtitle: 'Đêm qua bạn ngủ ${s.hours.toStringAsFixed(1)} giờ, rất tốt. '
+            'Bắt đầu đo giấc ngủ nhé',
+        cta: 'Bắt đầu đi ngủ',
+        action: SuggestionAction.openSleep,
+      );
+    }
     return Suggestion(
       kind: SuggestionKind.sleep,
       title: 'Tối nay đi ngủ sớm nhé',
-      subtitle: 'Đêm qua bạn mới ngủ ${s.hours.toStringAsFixed(1)} giờ',
+      subtitle: s == null
+          ? 'Chưa có dữ liệu giấc ngủ đêm qua'
+          : 'Đêm qua bạn mới ngủ ${s.hours.toStringAsFixed(1)} giờ',
       cta: 'Bắt đầu đi ngủ',
       action: SuggestionAction.openSleep,
     );

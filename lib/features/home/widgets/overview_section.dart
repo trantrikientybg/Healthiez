@@ -11,7 +11,20 @@ class OverviewSection extends StatefulWidget {
   final SleepRecord? sleep;
   final ScreenTimeRecord? screenTime;
 
-  const OverviewSection({super.key, this.steps, this.sleep, this.screenTime});
+  /// true khi đã đọc xong mà chưa có dữ liệu giấc ngủ nào.
+  final bool sleepEmpty;
+
+  /// Bấm vào thẻ Giấc ngủ (mở chế độ ngủ). Lối vào luôn có, không phụ thuộc thẻ gợi ý.
+  final VoidCallback? onSleepTap;
+
+  const OverviewSection({
+    super.key,
+    this.steps,
+    this.sleep,
+    this.screenTime,
+    this.sleepEmpty = false,
+    this.onSleepTap,
+  });
 
   @override
   State<OverviewSection> createState() => _OverviewSectionState();
@@ -68,15 +81,21 @@ class _OverviewSectionState extends State<OverviewSection> {
 
   Widget _sleepCard() {
     final s = widget.sleep;
-    return MetricCard(
+    final card = MetricCard(
       title: 'Giấc ngủ',
       percent: s?.percent ?? 0,
       lines: s == null
-          ? const [MetricLine('', '...')]
+          ? [MetricLine('', widget.sleepEmpty ? 'Chưa có dữ liệu' : '...')]
           : [
               MetricLine('Thời gian:', s.rangeLabel),
               MetricLine('Trạng thái:', s.status),
             ],
+    );
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onSleepTap,
+      child: card,
     );
   }
 

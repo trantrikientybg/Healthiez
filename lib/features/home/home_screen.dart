@@ -11,12 +11,14 @@ import '../../data/models/user_profile.dart';
 import '../../data/repositories/activity_repository.dart';
 import '../../data/repositories/mood_repository.dart';
 import '../../data/repositories/mood_sync.dart';
+import '../../data/repositories/sleep_repository.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../screens/mental/mental_data.dart' show Mood;
 import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/section_chip.dart';
 import '../../shared/widgets/theme_debug_switcher.dart';
 import '../meditation/meditation_screen.dart';
+import '../sleep/sleep_screen.dart';
 import 'logic/suggestion.dart';
 import 'logic/suggestion_dismiss_store.dart';
 import 'logic/suggestion_engine.dart';
@@ -43,12 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final UserRepository _userRepo = UserRepository();
   final ActivityRepository _activityRepo = ActivityRepository();
   final MoodRepository _moodRepo = MoodRepository();
+  final SleepRepository _sleepRepo = SleepRepository();
   final SuggestionDismissStore _dismissStore = SuggestionDismissStore();
 
   UserProfile? _profile;
   Streak? _streak;
   StepRecord? _steps;
   SleepRecord? _sleep;
+  bool _sleepLoaded = false;
   ScreenTimeRecord? _screenTime;
   Mood? _mood; // tâm trạng hôm nay
   Map<DateTime, Mood> _moodHistory = {};
@@ -82,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final profileF = _userRepo.getProfile();
     final streakF = _userRepo.getStreak();
     final stepsF = _activityRepo.getTodaySteps();
-    final sleepF = _activityRepo.getLastNightSleep();
+    final sleepF = _sleepRepo.getLastNightSleep();
     final screenF = _activityRepo.getTodayScreenTime();
     final moodF = _moodRepo.getToday();
     final historyF = _moodRepo.getRecent(days: AppConstants.moodTrendDays);
@@ -103,6 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _streak = streak;
       _steps = steps;
       _sleep = sleep;
+      _sleepLoaded = true;
       _screenTime = screen;
       _mood = mood;
       _moodHistory = history;
@@ -140,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
         now: now,
         steps: _steps,
         sleep: _sleep,
+        sleepLoaded: _sleepLoaded,
         screenTime: _screenTime,
         recentMoods: _recentMoods(now),
       ),
@@ -160,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute<void>(builder: (_) => const MeditationScreen()),
         );
       case SuggestionAction.openSleep:
-        _toast('Tính năng này đang được phát triển, sắp ra mắt nhé!');
+        await _openSleep();
     }
   }
 
@@ -176,6 +182,23 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     if (!ok) _toast('Không mở được liên kết. Kiểm tra lại link nhạc nhé.');
+  }
+
+  /// Mở chế độ ngủ (từ thẻ gợi ý hoặc từ thẻ Giấc ngủ), rồi cập nhật lại dữ liệu.
+  Future<void> _openSleep() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SleepScreen()),
+    );
+    await _reloadSleep(); // có thể vừa ngủ xong
+  }
+
+  Future<void> _reloadSleep() async {
+    final sleep = await _sleepRepo.getLastNightSleep();
+    if (!mounted) return;
+    setState(() {
+      _sleep = sleep;
+      _sleepLoaded = true;
+    });
   }
 
   void _onSuggestionDismiss(Suggestion s) {
@@ -216,6 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
               steps: _steps,
               sleep: _sleep,
               screenTime: _screenTime,
+              sleepEmpty: _sleepLoaded && _sleep == null,
+              onSleepTap: _openSleep,
             ),
             const SizedBox(height: 24),
             Padding(

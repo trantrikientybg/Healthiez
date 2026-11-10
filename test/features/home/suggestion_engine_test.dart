@@ -14,7 +14,7 @@ void main() {
       StepRecord(date: day, steps: n, goal: 10000, weeklyTotal: n);
 
   SleepRecord sleep(int hours) => SleepRecord(
-        date: day,
+        date: DateTime(2026, 11, 4), // ngày ngủ trước ngày ngủ của now (5/11)
         bedTime: DateTime(2026, 11, 5, 0),
         wakeTime: DateTime(2026, 11, 5, hours),
         goalHours: 8,
@@ -61,8 +61,38 @@ void main() {
     expect(out, isNot(contains(SuggestionKind.sleep)));
   });
 
-  test('ngủ đủ giấc sau 22h: không gợi ý đi ngủ', () {
-    final out = kinds(SuggestionInput(now: DateTime(2026, 11, 5, 23), sleep: sleep(8)));
+  test('ngủ đủ giấc đêm trước: đến khuya vẫn hiện thẻ để người dùng đo giấc ngủ', () {
+    final list = run(SuggestionInput(now: DateTime(2026, 11, 5, 23), sleep: sleep(8)));
+    final s = list.firstWhere((e) => e.kind == SuggestionKind.sleep);
+    expect(s.title, 'Sắp đến giờ đi ngủ rồi');
+    expect(s.action, SuggestionAction.openSleep);
+  });
+
+  test('tối nay đã ngủ rồi (1h30 sáng, đã lưu giấc ngủ): không hiện nữa', () {
+    final slept = SleepRecord(
+      date: DateTime(2026, 11, 5), // cùng ngày ngủ với 1h30 sáng 6/11
+      bedTime: DateTime(2026, 11, 5, 23),
+      wakeTime: DateTime(2026, 11, 6, 1, 30),
+      goalHours: 8,
+      asleep: const Duration(hours: 2, minutes: 30),
+    );
+    final out = kinds(SuggestionInput(now: DateTime(2026, 11, 6, 1, 30), sleep: slept));
+    expect(out, isNot(contains(SuggestionKind.sleep)));
+  });
+
+  test('chưa có dữ liệu giấc ngủ nhưng đã khuya: vẫn gợi ý đi ngủ (để bắt đầu dùng)', () {
+    final list = run(SuggestionInput(now: DateTime(2026, 11, 5, 23), sleepLoaded: true));
+    final s = list.firstWhere((e) => e.kind == SuggestionKind.sleep);
+    expect(s.subtitle, contains('Chưa có dữ liệu'));
+  });
+
+  test('đang tải dữ liệu giấc ngủ: chưa gợi ý, tránh nhấp nháy', () {
+    final out = kinds(SuggestionInput(now: DateTime(2026, 11, 5, 23), sleepLoaded: false));
+    expect(out, isNot(contains(SuggestionKind.sleep)));
+  });
+
+  test('chưa có dữ liệu nhưng ban ngày: không gợi ý đi ngủ', () {
+    final out = kinds(SuggestionInput(now: DateTime(2026, 11, 5, 14)));
     expect(out, isNot(contains(SuggestionKind.sleep)));
   });
 

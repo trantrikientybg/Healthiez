@@ -9,7 +9,7 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'services/auth_service.dart';
-
+// flutter run -d emulator-5554 --dart-define-from-file=supabase.local.json
 // Khóa Supabase KHÔNG ghi cứng trong code, truyền qua:
 //   --dart-define-from-file=supabase.local.json
 // (copy từ supabase.example.json, file local nằm trong .gitignore)

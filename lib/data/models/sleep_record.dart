@@ -4,14 +4,21 @@ class SleepRecord {
   final DateTime wakeTime;
   final double goalHours;
 
+  /// Thời gian ngủ thực tế (không tính các lúc mở máy giữa đêm).
+  /// Null thì tính từ giờ đi ngủ đến giờ dậy.
+  final Duration? asleep;
+
   const SleepRecord({
     required this.date,
     required this.bedTime,
     required this.wakeTime,
     required this.goalHours,
+    this.asleep,
   });
 
-  double get hours => wakeTime.difference(bedTime).inMinutes / 60;
+  double get hours => asleep != null
+      ? asleep!.inMinutes / 60
+      : wakeTime.difference(bedTime).inMinutes / 60;
 
   double get percent => goalHours == 0 ? 0 : (hours / goalHours).clamp(0.0, 1.0);
 

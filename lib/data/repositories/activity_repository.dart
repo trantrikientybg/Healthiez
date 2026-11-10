@@ -1,9 +1,10 @@
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/date_utils.dart';
 import '../models/screen_time_record.dart';
-import '../models/sleep_record.dart';
 import '../models/step_record.dart';
 
+/// Bước chân và thời gian dùng máy (hiện vẫn là dữ liệu giả).
+/// Giấc ngủ đã chuyển sang SleepRepository.
 class ActivityRepository {
   Future<StepRecord> getTodaySteps() async {
     await Future.delayed(const Duration(milliseconds: 300));
@@ -12,17 +13,6 @@ class ActivityRepository {
       steps: 7500,
       goal: AppConstants.stepGoal,
       weeklyTotal: 27500,
-    );
-  }
-
-  Future<SleepRecord> getLastNightSleep() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final today = AppDateUtils.dateOnly(DateTime.now());
-    return SleepRecord(
-      date: today,
-      bedTime: today.subtract(const Duration(hours: 1)),          // 23:00 hôm qua
-      wakeTime: today.add(const Duration(hours: 7, minutes: 30)), // 7:30 hôm nay
-      goalHours: AppConstants.sleepGoalHours,
     );
   }
 
