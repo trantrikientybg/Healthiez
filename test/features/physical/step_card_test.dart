@@ -26,7 +26,7 @@ void main() {
     expect(find.text('0 bước'), findsOneWidget);
     await tester.tap(find.text('Bắt đầu theo dõi'));
     await tester.pumpAndSettle();
-    expect(find.text('Đang theo dõi bước chân'), findsOneWidget);
+    expect(find.text('Dừng theo dõi'), findsOneWidget);
     events.add(100);
     await tester.pumpAndSettle();
     events.add(112);
@@ -37,7 +37,7 @@ void main() {
     expect(find.textContaining('Không đọc được cảm biến'), findsOneWidget);
     await tester.tap(find.text('Bắt đầu theo dõi'));
     await tester.pumpAndSettle();
-    expect(find.text('Đang theo dõi bước chân'), findsOneWidget);
+    expect(find.text('Dừng theo dõi'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     controller.dispose();
     await events.close();
