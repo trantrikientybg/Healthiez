@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:pedometer/pedometer.dart';
@@ -29,6 +30,9 @@ class StepController extends ChangeNotifier {
   bool busy = false;
   bool tracking = false;
   int steps = 0;
+  // Past days' totals ('YYYY-MM-DD' → steps), kept so a new day doesn't erase them.
+  // ponytail: unbounded (~8 KB/year); prune or move to rows if it ever matters.
+  Map<String, int> history = {};
   int? _last;
   String? _day;
   String? error;
@@ -48,6 +52,15 @@ class StepController extends ChangeNotifier {
       (await SharedPreferences.getInstance()).setString(storageKey, value);
 
   static Future<Stream<int>> _connectSensor() async {
+    if (const bool.fromEnvironment('FAKE_PEDOMETER')) {
+      // Debug only: simulated cumulative sensor (~1 step/s, with pauses).
+      final random = Random();
+      var total = 120000;
+      return Stream.periodic(
+        const Duration(seconds: 2),
+        (_) => total += random.nextInt(4),
+      );
+    }
     if (kIsWeb ||
         (defaultTargetPlatform != TargetPlatform.android &&
             defaultTargetPlatform != TargetPlatform.iOS)) {
@@ -86,8 +99,14 @@ class StepController extends ChangeNotifier {
           throw const FormatException('Invalid step record');
         }
         steps = count;
-        _last = last;
+        // Paused: steps walked while stopped must not count on the next start.
+        _last = data['paused'] == true ? null : last;
         _day = day;
+        history = {
+          for (final entry
+              in ((data['history'] as Map<String, dynamic>?) ?? {}).entries)
+            entry.key: entry.value as int,
+        };
       }
       ready = true;
       refreshDay();
@@ -103,6 +122,7 @@ class StepController extends ChangeNotifier {
     if (!ready || _disposed) return;
     final today = _date(_now());
     if (_day == today) return;
+    if (_day != null && steps > 0) history[_day!] = steps;
     _day = today;
     steps = 0;
     // A cumulative reading cannot split steps across an unobserved midnight.
@@ -139,6 +159,38 @@ class StepController extends ChangeNotifier {
     }
   }
 
+  Future<void> stop() async {
+    if (!tracking || _disposed) return;
+    await _subscription?.cancel();
+    _subscription = null;
+    tracking = false;
+    _changed();
+    // Queued after in-flight readings so none of them re-set the baseline.
+    _pending = _pending.then((_) async {
+      if (_disposed) return;
+      refreshDay();
+      _last = null;
+      try {
+        if (!await _write(_payload(_day!, steps, 0, paused: true))) {
+          throw StateError('Step write failed');
+        }
+      } catch (_) {
+        error = 'Không thể lưu trạng thái dừng. Vui lòng thử lại.';
+        _changed();
+      }
+    });
+    await _pending;
+  }
+
+  String _payload(String day, int count, int last, {bool paused = false}) =>
+      jsonEncode({
+        'date': day,
+        'steps': count,
+        'last': last,
+        'history': history,
+        if (paused) 'paused': true,
+      });
+
   void _sensorStopped() {
     _subscription = null;
     tracking = false;
@@ -154,9 +206,7 @@ class StepController extends ChangeNotifier {
     if (count == _last) return;
     final next = steps + delta;
     try {
-      final saved = await _write(
-        jsonEncode({'date': day, 'steps': next, 'last': count}),
-      );
+      final saved = await _write(_payload(day, next, count));
       if (!saved) throw StateError('Step write failed');
       if (_disposed) return;
       refreshDay();

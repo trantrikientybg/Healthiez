@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "quote": "Sức khỏe không phải là tất cả, nhưng không có sức khỏe thì tất cả đều trở thành vô nghĩa.",
+    "category": "Sức khỏe",
+    "author": "Arthur Schopenhauer"
+  },
+  {
+    "id": 2,
+    "quote": "Một tâm trí bình yên mang lại sức mạnh thể chất mạn mẽ nhất.",
+    "category": "Tinh thần",
+    "author": "Healthiez"
+  },
+  {
+    "id": 3,
+    "quote": "Hãy dịu dàng với bản thân hôm nay, bạn đang làm tốt hơn những gì bạn nghĩ đấy!",
+    "category": "Động lực",
+    "author": "Healthiez"
+  },
+  {
+    "id": 4,
+    "quote": "Mỗi bước đi nhỏ mỗi ngày sẽ tích lũy thành thành công lớn trong tương lai.",
+    "category": "Học tập & Công việc",
+    "author": "Vincent van Gogh"
+  },
+  {
+    "id": 5,
+    "quote": "Uống một ngụm nước ấm, hít thở thật sâu và cảm nhận sự sống căng tràn trong bạn.",
+    "category": "Sống khỏe",
+    "author": "Healthiez"
+  },
+  {
+    "id": 6,
+    "quote": "Đừng so sánh hành trình của bạn với bất kỳ ai. Mỗi bông hoa đều nở vào thời điểm đẹp nhất của riêng nó.",
+    "category": "Cuộc sống",
+    "author": "Healthiez"
+  },
+  {
+    "id": 7,
+    "quote": "Ngủ đủ giấc là món quà tuyệt vời nhất bạn có thể dành tặng cho não bộ của mình.",
+    "category": "Giấc ngủ",
+    "author": "Healthiez"
+  },
+  {
+    "id": 8,
+    "quote": "Cơ thể là ngôi đền duy nhất bạn phải sống trong đó suốt đời. Hãy chăm sóc nó thật tốt!",
+    "category": "Sức khỏe",
+    "author": "Jim Rohn"
+  },
+  {
+    "id": 9,
+    "quote": "Sau cơn mưa trời lại sáng. Mọi mệt mỏi hôm nay sẽ hóa thành sức mạnh cho ngày mai.",
+    "category": "Tinh thần",
+    "author": "Healthiez"
+  },
+  {
+    "id": 10,
+    "quote": "Tập trung vào hiện tại, bước từng bước một và tận hưởng niềm vui của sự kiên trì.",
+    "category": "Học tập",
+    "author": "Healthiez"
+  }
+]

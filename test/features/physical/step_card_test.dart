@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:healthiez/core/theme/day_period.dart';
 import 'package:healthiez/features/physical/step_card.dart';
 import 'package:healthiez/features/physical/step_controller.dart';
 
@@ -18,13 +19,14 @@ void main() {
     await controller.load();
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(extensions: const [PeriodPalette.morning]),
         home: Scaffold(body: StepCard(controller: controller)),
       ),
     );
     expect(find.text('0 bước'), findsOneWidget);
     await tester.tap(find.text('Bắt đầu theo dõi'));
     await tester.pumpAndSettle();
-    expect(find.text('Đang theo dõi bước chân'), findsOneWidget);
+    expect(find.text('Dừng theo dõi'), findsOneWidget);
     events.add(100);
     await tester.pumpAndSettle();
     events.add(112);
@@ -35,7 +37,7 @@ void main() {
     expect(find.textContaining('Không đọc được cảm biến'), findsOneWidget);
     await tester.tap(find.text('Bắt đầu theo dõi'));
     await tester.pumpAndSettle();
-    expect(find.text('Đang theo dõi bước chân'), findsOneWidget);
+    expect(find.text('Dừng theo dõi'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     controller.dispose();
     await events.close();
@@ -55,6 +57,7 @@ void main() {
       await controller.load();
       await tester.pumpWidget(
         MaterialApp(
+          theme: ThemeData(extensions: const [PeriodPalette.morning]),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: const TextScaler.linear(1.5)),

@@ -5,10 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PhysicalStore {
-  PhysicalStore(this.client, this.userId);
+  PhysicalStore(
+    this.client,
+    this.userId, {
+    this.useProfileStorage = const bool.fromEnvironment(
+      'PHYSICAL_PROFILE_STORAGE',
+    ),
+  });
 
   final SupabaseClient client;
   final String userId;
+  final bool useProfileStorage;
   static const table = 'physical_health_records';
   Future<String>? _deviceId;
 
@@ -44,6 +51,11 @@ class PhysicalStore {
 
   Future<String?> read(String kind) async {
     _checkUser();
+    if (kind == 'physical' && useProfileStorage) {
+      final payload = await client.rpc('read_physical_health');
+      _checkUser();
+      return payload == null ? null : jsonEncode(payload);
+    }
     final device = await _device(kind);
     _checkUser();
     final row = await client
@@ -60,6 +72,9 @@ class PhysicalStore {
   Future<bool> write(String kind, String value) async {
     _checkUser();
     final payload = jsonDecode(value) as Map<String, dynamic>;
+    if (kind == 'physical' && useProfileStorage) {
+      return _writePhysical(payload, measurements: false);
+    }
     final device = await _device(kind);
     _checkUser();
     // shortcut: last snapshot wins across devices; use atomic events for concurrent edits.
@@ -69,6 +84,27 @@ class PhysicalStore {
       'device_id': device,
       'payload': payload,
     }, onConflict: 'user_id,kind,device_id');
+    _checkUser();
+    return true;
+  }
+
+  Future<bool> writeMeasurements(String value) => !useProfileStorage
+      ? write('physical', value)
+      : _writePhysical(
+          jsonDecode(value) as Map<String, dynamic>,
+          measurements: true,
+        );
+
+  Future<bool> _writePhysical(
+    Map<String, dynamic> payload, {
+    required bool measurements,
+  }) async {
+    _checkUser();
+    // The RPC commits profile measurements and water together, or neither.
+    await client.rpc(
+      'save_physical_health',
+      params: {'p_payload': payload, 'p_measurements': measurements},
+    );
     _checkUser();
     return true;
   }

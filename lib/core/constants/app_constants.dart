@@ -1,8 +1,13 @@
 class AppConstants {
   AppConstants._();
 
+  static const String appName = 'Healthiez';
+  static const String supabaseUrl = 'https://tzdbowjwsewwzmxvcfqk.supabase.co';
+  static const String supabaseAnonKey = 'sb_publishable_RgNJjOg7dyXBpHJxA5yDoA_9LTzNSB2';
+
   // Mục tiêu
   static const int stepGoal = 10000;             // bước/ngày
+  static const int defaultStepGoal = 8000;
   static const double sleepGoalHours = 8;        // giờ ngủ mục tiêu
   static const int screenTimeLimitMinutes = 240; // 4 giờ/ngày (dùng cho vòng tròn %)
 

@@ -16,6 +16,7 @@ void main() {
   late Map<String, Map<String, dynamic>> records;
   late List<Uri> reads;
   late bool fail;
+  late Map<String, dynamic> profile;
   Completer<void>? holdRead;
   Completer<void>? readStarted;
 
@@ -32,6 +33,7 @@ void main() {
     records = {};
     reads = [];
     fail = false;
+    profile = {'height': null, 'weight': null};
     holdRead = null;
     readStarted = null;
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -40,6 +42,33 @@ void main() {
       if (fail) {
         request.response.statusCode = 400;
         request.response.write(jsonEncode({'message': 'Storage unavailable'}));
+      } else if (request.uri.path.endsWith('/rpc/read_physical_health')) {
+        reads.add(request.uri);
+        readStarted?.complete();
+        await holdRead?.future;
+        final payload =
+            records['user-a/physical/']?['payload'] as Map<String, dynamic>?;
+        request.response.write(
+          jsonEncode({
+            'heightCm': profile['height'],
+            'weightKg': profile['weight'],
+            'waterMl': payload?['waterMl'] ?? 0,
+            'waterDate': payload?['waterDate'] ?? '2026-10-25',
+          }),
+        );
+      } else if (request.uri.path.endsWith('/rpc/save_physical_health')) {
+        final arguments = jsonDecode(
+          await utf8.decoder.bind(request).join(),
+        ) as Map<String, dynamic>;
+        final payload = arguments['p_payload'] as Map<String, dynamic>;
+        if (arguments['p_measurements'] == true) {
+          profile['height'] = payload['heightCm'];
+          profile['weight'] = payload['weightKg'];
+        }
+        records['user-a/physical/'] = {
+          'payload': {...payload, 'heightCm': null, 'weightKg': null},
+        };
+        request.response.statusCode = 204;
       } else if (request.method == 'POST') {
         final row = jsonDecode(
           await utf8.decoder.bind(request).join(),
@@ -71,7 +100,7 @@ void main() {
       authOptions: const AuthClientOptions(autoRefreshToken: false),
     );
     await signIn('user-a');
-    store = PhysicalStore(client, 'user-a');
+    store = PhysicalStore(client, 'user-a', useProfileStorage: true);
   });
 
   tearDown(() async {
@@ -83,6 +112,7 @@ void main() {
     now: () => DateTime(2026, 10, 25),
     read: () => store.read('physical'),
     write: (value) => store.write('physical', value),
+    writeMeasurements: store.writeMeasurements,
   );
 
   test('measurements and water restore through Supabase requests', () async {
@@ -97,9 +127,50 @@ void main() {
     expect(restored.heightCm, 170.5);
     expect(restored.weightKg, 65.5);
     expect(restored.waterMl, 250);
-    expect(reads.last.queryParameters['user_id'], 'eq.user-a');
+    expect(reads.last.path, '/rest/v1/rpc/read_physical_health');
+    expect(profile, {'height': 170.5, 'weight': 65.5});
+    expect(records.values.single['payload']['heightCm'], isNull);
     expect(records.keys.single, 'user-a/physical/');
   });
+
+  test(
+    'default storage works with the deployed schema without profile RPCs',
+    () async {
+      final deployed = PhysicalStore(client, 'user-a');
+      final controller = PhysicalController(
+        now: () => DateTime(2026, 10, 25),
+        read: () => deployed.read('physical'),
+        write: (value) => deployed.write('physical', value),
+        writeMeasurements: deployed.writeMeasurements,
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
+      expect(await controller.saveMeasurements(170.5, 65.5), isTrue);
+      expect(await controller.addWater(), isTrue);
+      final data = jsonDecode((await deployed.read('physical'))!);
+      expect(data['heightCm'], 170.5);
+      expect(data['weightKg'], 65.5);
+      expect(data['waterMl'], 250);
+      expect(reads.every((uri) => !uri.path.contains('/rpc/')), isTrue);
+    },
+  );
+
+  test(
+    'water save preserves measurements changed by the profile feature',
+    () async {
+      final controller = physical();
+      addTearDown(controller.dispose);
+      await controller.load();
+      expect(await controller.saveMeasurements(170.5, 65.5), isTrue);
+      profile['weight'] = 66.5;
+      expect(await controller.addWater(), isTrue);
+      expect(profile['weight'], 66.5);
+      final restored = physical();
+      addTearDown(restored.dispose);
+      await restored.load();
+      expect(restored.weightKg, 66.5);
+    },
+  );
 
   test('cloud failures retain confirmed values and allow retry', () async {
     final controller = physical();

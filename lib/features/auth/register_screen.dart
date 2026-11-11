@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
+import '../../core/constants/app_assets.dart';
+import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/auth/custom_textfield.dart';
-import '../../widgets/auth/header_wave.dart';
-import '../../widgets/auth/primary_button.dart';
+import '../../shared/widgets/app_header.dart';
+import 'widgets/custom_textfield.dart';
+import 'widgets/primary_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -50,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -94,45 +95,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       if (response.user != null) {
-        if (response.session != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-                  SizedBox(width: 10),
-                  Text('Đăng ký tài khoản thành công!'),
-                ],
-              ),
-              backgroundColor: const Color(0xFF10B981),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text('Đăng ký tài khoản thành công!'),
+              ],
             ),
-          );
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          ),
+        );
+
+        if (response.session != null) {
           Navigator.pushReplacementNamed(context, '/main');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.mark_email_read_outlined, color: Colors.white, size: 20),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.',
-                      style: TextStyle(fontSize: 13, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: const Color(0xFF3B82F6),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              duration: const Duration(seconds: 5),
-            ),
-          );
           Navigator.pushReplacementNamed(context, '/login');
         }
       }
@@ -141,7 +122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _isLoading = false;
       });
-      _showError(AuthService.getErrorMessage(e));
+      _showError('Đăng ký thất bại: ${e.toString().replaceAll('Exception:', '')}');
     }
   }
 
@@ -154,8 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Header Sóng Xanh - Giữ đúng tỉ lệ 36% đồng nhất với WelcomeScreen
-            HeaderWave(
+            AppHeader(
               height: screenHeight * 0.36,
             ),
 
@@ -168,12 +148,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     const SizedBox(height: 18),
 
-                    // 2. Tiêu đề: Icon register_icon.png + "Đăng ký!"
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/register_icon.png',
+                          AppAssets.registerIcon,
                           width: 26,
                           height: 30,
                           fit: BoxFit.contain,
@@ -199,7 +178,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 18),
 
-                    // 3. Ô 1: Tên tài khoản
                     CustomTextField(
                       hintText: 'Tên tài khoản',
                       controller: _usernameController,
@@ -207,7 +185,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 11),
 
-                    // 4. Ô 2: Mật khẩu
                     CustomTextField(
                       hintText: 'Mật khẩu',
                       controller: _passwordController,
@@ -216,7 +193,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 11),
 
-                    // 5. Ô 3: Nhập lại mật khẩu
                     CustomTextField(
                       hintText: 'Nhập lại mật khẩu',
                       controller: _confirmPasswordController,
@@ -225,7 +201,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 11),
 
-                    // 6. Ô 4: Nhập email
                     CustomTextField(
                       hintText: 'Nhập email',
                       controller: _emailController,
@@ -234,7 +209,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 22),
 
-                    // 7. Nút "Tiếp tục"
                     if (_isLoading)
                       CircularProgressIndicator(color: AppColors.primary)
                     else
@@ -247,7 +221,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 16),
 
-                    // 8. Footer: "Đã có tài khoản? [Đăng nhập]"
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

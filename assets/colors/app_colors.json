@@ -1,8 +1,35 @@
 {
-  "primary": "#6844FF",
-  "primaryLight": "#229FFE",
-  "background": "#F8FAFC",
-  "textPrimary": "#1E293B",
-  "textSecondary": "#64748B",
-  "buttonOutlinedBorder": "#6844FF"
+  "day": {
+    "primary": "#6844FF",
+    "primaryLight": "#229FFE",
+    "background": "#F2F5F9",
+    "textPrimary": "#1E293B",
+    "textSecondary": "#64748B",
+    "buttonOutlinedBorder": "#6844FF",
+    "tealAccent": "#14B8A6",
+    "tealLightBg": "#E6F7F5",
+    "cardBackground": "#FFFFFF"
+  },
+  "noon": {
+    "primary": "#F97316",
+    "primaryLight": "#FBBF24",
+    "background": "#FFE8D6",
+    "textPrimary": "#431407",
+    "textSecondary": "#9A3412",
+    "buttonOutlinedBorder": "#F97316",
+    "tealAccent": "#EA580C",
+    "tealLightBg": "#FFEDD5",
+    "cardBackground": "#FFFFFF"
+  },
+  "night": {
+    "primary": "#6366F1",
+    "primaryLight": "#38BDF8",
+    "background": "#0B1329",
+    "textPrimary": "#F8FAFC",
+    "textSecondary": "#94A3B8",
+    "buttonOutlinedBorder": "#38BDF8",
+    "tealAccent": "#38BDF8",
+    "tealLightBg": "#2A3854",
+    "cardBackground": "#131C2E"
+  }
 }

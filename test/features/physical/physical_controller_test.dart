@@ -226,4 +226,20 @@ void main() {
     pending.complete(null);
     await loading;
   });
+
+  test('new day keeps previous water in history', () async {
+    await controller.addWater();
+    await controller.addWater();
+    now = DateTime(2026, 10, 25, 8);
+    await controller.addWater();
+    expect(controller.waterHistory, {'2026-10-24': 500});
+    final restored = PhysicalController(
+      now: () => now,
+      read: () async => stored,
+    );
+    await restored.load();
+    expect(restored.waterHistory, {'2026-10-24': 500});
+    expect(restored.waterMl, 250);
+    restored.dispose();
+  });
 }

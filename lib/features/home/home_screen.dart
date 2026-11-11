@@ -16,7 +16,6 @@ import '../../data/repositories/user_repository.dart';
 import '../../screens/mental/mental_data.dart' show Mood;
 import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/section_chip.dart';
-import '../../shared/widgets/theme_debug_switcher.dart';
 import '../meditation/meditation_screen.dart';
 import '../sleep/sleep_screen.dart';
 import 'logic/suggestion.dart';
@@ -58,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<DateTime, Mood> _moodHistory = {};
   Set<String> _dismissed = {};
 
-  /// Để thử các luật theo giờ, tạm đổi thành ví dụ DateTime(2026, 11, 5, 23).
   DateTime _now() => DateTime.now();
 
   @override
@@ -74,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Tab Tinh thần vừa đổi tâm trạng -> Home cập nhật theo
   void _onMoodSync() {
     final s = MoodSync.instance;
     if (identical(s.source, this) || s.mood == null) return;
@@ -82,7 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    // Gọi tất cả cùng lúc (chưa await) để các lần chờ chạy song song
     final profileF = _userRepo.getProfile();
     final streakF = _userRepo.getStreak();
     final stepsF = _activityRepo.getTodaySteps();
@@ -116,19 +112,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onMoodSelected(Mood mood) async {
-    setState(() => _mood = mood); // hiện ngay, không chờ mạng
+    setState(() => _mood = mood);
     final ok = await _moodRepo.saveToday(mood);
     if (!mounted) return;
     if (ok) {
-      MoodSync.instance.update(mood, this); // báo cho tab Tinh thần
+      MoodSync.instance.update(mood, this);
       return;
     }
     _toast('Chưa lưu được tâm trạng. Kiểm tra kết nối và thử lại.');
   }
 
-  // ---------------- Gợi ý hằng ngày ----------------
-
-  /// Tâm trạng các ngày gần đây (cũ -> mới), hôm nay lấy theo lựa chọn mới nhất.
   List<Mood> _recentMoods(DateTime now) {
     final today = AppDateUtils.dateOnly(now);
     final map = Map<DateTime, Mood>.from(_moodHistory);
@@ -184,12 +177,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!ok) _toast('Không mở được liên kết. Kiểm tra lại link nhạc nhé.');
   }
 
-  /// Mở chế độ ngủ (từ thẻ gợi ý hoặc từ thẻ Giấc ngủ), rồi cập nhật lại dữ liệu.
   Future<void> _openSleep() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const SleepScreen()),
     );
-    await _reloadSleep(); // có thể vừa ngủ xong
+    await _reloadSleep();
   }
 
   Future<void> _reloadSleep() async {
@@ -215,13 +207,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Nền theo buổi chỉ áp dụng cho Home (Login và Tinh thần không đổi)
     return ColoredBox(
       color: context.palette.background,
       child: SingleChildScrollView(
         child: Column(
           children: [
             AppHeader(
+              onSettingsPressed: () async {
+                await Navigator.pushNamed(context, '/settings');
+                _loadData();
+              },
               child: GreetingHeader(profile: _profile, streak: _streak),
             ),
             const SizedBox(height: 16),
@@ -256,11 +251,8 @@ class _HomeScreenState extends State<HomeScreen> {
               suggestions: _suggestions(),
               onTap: _onSuggestionTap,
               onDismiss: _onSuggestionDismiss,
-              // Ô nhỏ dưới thẻ nhạc -> phần nhạc đầy đủ ở tab Tinh thần
               onMoreMusic: widget.onOpenMental,
             ),
-            const SizedBox(height: 12),
-            const ThemeDebugSwitcher(), // TẠM: xóa khi có Settings
             const SizedBox(height: 32),
           ],
         ),
