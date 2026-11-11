@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../constants/app_colors.dart';
+import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/auth/header_wave.dart';
-import '../../widgets/auth/primary_button.dart';
-import '../../widgets/auth/social_buttons.dart';
+import '../../shared/widgets/app_header.dart';
+import 'widgets/primary_button.dart';
+import 'widgets/social_buttons.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -110,8 +110,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with WidgetsBindingObserv
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Header Sóng Xanh - Chiếm 36% màn hình chuẩn thiết kế
-            HeaderWave(
+            AppHeader(
               height: screenHeight * 0.36,
             ),
 
@@ -122,7 +121,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with WidgetsBindingObserv
                 children: [
                   const SizedBox(height: 36),
 
-                  // 2. Tiêu đề "Chào mừng!"
                   Text(
                     'Chào mừng!',
                     style: TextStyle(
@@ -145,7 +143,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with WidgetsBindingObserv
                     ),
                     const SizedBox(height: 30),
                   ] else ...[
-                    // 3. Nút "Tạo tài khoản" (Màu Gradient)
                     PrimaryButton(
                       text: 'Tạo tài khoản',
                       height: 52,
@@ -157,7 +154,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with WidgetsBindingObserv
 
                     const SizedBox(height: 14),
 
-                    // 4. Nút "Đăng nhập" (Màu Outlined viền tím)
                     PrimaryButton(
                       text: 'Đăng nhập',
                       height: 52,
@@ -169,7 +165,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with WidgetsBindingObserv
 
                     const SizedBox(height: 32),
 
-                    // 5. Text "hoặc đăng nhập bằng"
                     Text(
                       'hoặc đăng nhập bằng',
                       style: TextStyle(
@@ -180,7 +175,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with WidgetsBindingObserv
 
                     const SizedBox(height: 14),
 
-                    // 6. Cụm Icon Facebook & Google
                     SocialButtonsRow(
                       onFacebookPressed: () {
                         _handleSocialLogin(

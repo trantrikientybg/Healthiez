@@ -1,10 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/brand_colors.dart';
 import '../../core/theme/day_period.dart';
+import '../../data/models/user_profile.dart';
+import '../../data/repositories/user_repository.dart';
 import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/progress_ring.dart';
 import '../../shared/widgets/section_chip.dart';
@@ -54,7 +54,22 @@ class _PhysicalScreenState extends State<PhysicalScreen>
 
   Future<void> _load() async {
     await _controller.load();
-    if (!mounted || !_controller.ready) return;
+    if (!mounted) return;
+
+    // Tự động đồng bộ chiều cao & cân nặng từ bảng profiles (Settings) nếu controller chưa có
+    try {
+      final profile = await UserRepository.getCurrentUserProfile();
+      if (profile != null) {
+        if (_controller.heightCm == null && profile.height != null && profile.height! > 0) {
+          _controller.heightCm = profile.height;
+        }
+        if (_controller.weightKg == null && profile.weight != null && profile.weight! > 0) {
+          _controller.weightKg = profile.weight;
+        }
+      }
+    } catch (_) {}
+
+    if (!_controller.ready) return;
     _height.text = _controller.heightCm?.toString() ?? '';
     _weight.text = _controller.weightKg?.toString() ?? '';
   }
@@ -74,7 +89,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
   void didUpdateWidget(covariant PhysicalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) {
-      _controller.refreshDay();
+      _load();
       _steps.refreshDay();
     }
   }
@@ -82,7 +97,7 @@ class _PhysicalScreenState extends State<PhysicalScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _controller.refreshDay();
+      _load();
       _steps.refreshDay();
       _scheduleMidnight();
     }
@@ -91,11 +106,35 @@ class _PhysicalScreenState extends State<PhysicalScreen>
   Future<void> _saveMeasurements() async {
     if (!_form.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
+
+    final parsedHeight = PhysicalController.parseMeasurement(_height.text)!;
+    final parsedWeight = PhysicalController.parseMeasurement(_weight.text)!;
+
     final saved = await _controller.saveMeasurements(
-      PhysicalController.parseMeasurement(_height.text)!,
-      PhysicalController.parseMeasurement(_weight.text)!,
+      parsedHeight,
+      parsedWeight,
     );
     if (!mounted || !saved) return;
+
+    // Đồng bộ chỉ số cơ thể ngược lại bảng profiles trong Supabase cho SettingScreen
+    try {
+      final profile = await UserRepository.getCurrentUserProfile();
+      if (profile != null) {
+        final updatedProfile = UserProfile(
+          id: profile.id,
+          username: profile.username,
+          email: profile.email,
+          fullName: profile.fullName,
+          avatarUrl: profile.avatarUrl,
+          dateOfBirth: profile.dateOfBirth,
+          gender: profile.gender,
+          weight: parsedWeight,
+          height: parsedHeight,
+        );
+        await UserRepository.updateFullUserProfile(updatedProfile);
+      }
+    } catch (_) {}
+
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Đã lưu chỉ số cơ thể.')));
   }
@@ -227,6 +266,10 @@ class _PhysicalScreenState extends State<PhysicalScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AppHeader(
+                  onSettingsPressed: () async {
+                    await Navigator.pushNamed(context, '/settings');
+                    _load();
+                  },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

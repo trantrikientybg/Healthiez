@@ -5,7 +5,6 @@ import '../core/theme/theme_controller.dart';
 import '../features/home/home_screen.dart';
 import '../features/physical/physical_screen.dart';
 import '../features/physical/physical_store.dart';
-// Màn Tinh thần của bạn cùng nhóm (giữ nguyên vị trí cũ), import có prefix
 import '../screens/mental/mental_screen.dart' as mental;
 import 'app_bottom_nav.dart';
 
@@ -39,8 +38,6 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  // Getter (không phải const): Thể chất cần biết tab nào đang mở (active)
-  // và tài khoản hiện tại (store), nên phải dựng lại khi các giá trị này đổi.
   List<Widget> get _screens {
     final client = Supabase.instance.client;
     return [
@@ -50,7 +47,7 @@ class _MainShellState extends State<MainShell> {
           builder: (context, _) {
             final user = client.auth.currentUser;
             return PhysicalScreen(
-              key: ValueKey(user?.id), // đổi tài khoản thì màn Thể chất làm mới
+              key: ValueKey(user?.id),
               active: _currentIndex == _physicalIndex,
               store: user == null ? null : PhysicalStore(client, user.id),
             );
@@ -69,8 +66,6 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Gắn bảng màu theo buổi cho Home + thanh điều hướng.
-    // Chỉ thêm extension, KHÔNG đổi theme chung nên Tinh thần/Thể chất không bị ảnh hưởng.
     return ListenableBuilder(
       listenable: ThemeController.instance,
       builder: (context, _) {
@@ -78,13 +73,10 @@ class _MainShellState extends State<MainShell> {
         return Theme(
           data: Theme.of(context).copyWith(extensions: [palette]),
           child: Scaffold(
-            // Trang chủ + Thể chất: nền Scaffold = nền theo buổi để hai góc bo
-            // của thanh nav lộ ra đúng màu. Tinh thần giữ nền mặc định.
             backgroundColor:
                 _currentIndex == _mentalIndex ? null : palette.background,
             body: PageView(
               controller: _pageController,
-              // Tắt vuốt ngang để không đụng với khung cuộn ngang của Tổng quan
               physics: const NeverScrollableScrollPhysics(),
               children: _screens,
             ),
@@ -99,7 +91,6 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-/// Giữ widget con "sống" khi chuyển tab, để không bị build lại từ đầu.
 class _KeepAlivePage extends StatefulWidget {
   final Widget child;
   const _KeepAlivePage({required this.child});
