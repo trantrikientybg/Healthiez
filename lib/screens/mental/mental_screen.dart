@@ -315,7 +315,7 @@ class _MentalScreenState extends State<MentalScreen> {
           ),
           _card(
             title: 'Biểu đồ tâm trạng',
-            subtitle: 'Dữ liệu 7 ngày gần nhất',
+            subtitle: 'Dữ liệu 28 ngày gần nhất',
             child: _chart(),
           ),
           _card(
@@ -359,7 +359,7 @@ class _MentalScreenState extends State<MentalScreen> {
                           width: 54,
                           height: 54,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (_, _, _) =>
                               const Icon(Icons.person_outline, size: 32),
                         ),
                       )

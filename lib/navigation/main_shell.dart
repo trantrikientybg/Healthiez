@@ -74,7 +74,7 @@ class _MainShellState extends State<MainShell> {
           data: Theme.of(context).copyWith(extensions: [palette]),
           child: Scaffold(
             backgroundColor:
-                _currentIndex == _mentalIndex ? null : palette.background,
+                palette.background,
             body: PageView(
               controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
