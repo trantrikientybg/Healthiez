@@ -33,7 +33,8 @@ begin
     'heightCm', case when profile.height is not null and profile.weight is not null then profile.height end,
     'weightKg', case when profile.height is not null and profile.weight is not null then profile.weight end,
     'waterMl', coalesce(data->'waterMl', '0'::jsonb),
-    'waterDate', coalesce(data->>'waterDate', to_char(current_date, 'YYYY-MM-DD'))
+    'waterDate', coalesce(data->>'waterDate', to_char(current_date, 'YYYY-MM-DD')),
+    'waterHistory', coalesce(data->'waterHistory', '{}'::jsonb)
   );
 end;
 $$;

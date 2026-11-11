@@ -55,11 +55,11 @@ class StepCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Bắt đầu theo dõi để ghi nhận bước chân bằng điện thoại. Số bước có thể cập nhật trễ.',
+              'Bật theo dõi khi muốn đếm bước, dừng bất cứ lúc nào. Số bước có thể cập nhật trễ.',
             ),
             const SizedBox(height: 8),
             const Text(
-              'Ngày mới bắt đầu từ lần đọc cảm biến đầu tiên. Không đảm bảo đếm khi ứng dụng đóng.',
+              'Bước đi khi đã dừng sẽ không được tính. Nếu ứng dụng bị đóng, hãy bật lại để tiếp tục.',
             ),
             if (controller.error != null) ...[
               const SizedBox(height: 8),
@@ -73,17 +73,21 @@ class StepCard extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: controller.busy || controller.tracking
+              onPressed: controller.busy
                   ? null
+                  : controller.tracking
+                  ? controller.stop
                   : controller.ready
                   ? controller.start
                   : controller.load,
-              icon: const Icon(Icons.directions_walk),
+              icon: Icon(
+                controller.tracking ? Icons.stop : Icons.directions_walk,
+              ),
               label: Text(
                 controller.busy
                     ? 'Đang chuẩn bị…'
                     : controller.tracking
-                    ? 'Đang theo dõi bước chân'
+                    ? 'Dừng theo dõi'
                     : controller.ready
                     ? 'Bắt đầu theo dõi'
                     : 'Thử lại',

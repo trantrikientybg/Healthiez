@@ -244,4 +244,54 @@ void main() {
     expect(events.hasListener, isFalse);
     await events.close();
   });
+
+  test('stop ignores steps walked while stopped, even after restart', () async {
+    final events = StreamController<int>.broadcast();
+    StepController make() => StepController(
+      now: () => now,
+      read: () async => stored,
+      write: (value) async {
+        stored = value;
+        return true;
+      },
+      connect: () async => events.stream,
+    );
+    final walker = make();
+    await walker.load();
+    await walker.start();
+    events.add(100);
+    events.add(110);
+    await Future<void>.delayed(Duration.zero);
+    await walker.stop();
+    expect(walker.tracking, isFalse);
+    events.add(500);
+    await Future<void>.delayed(Duration.zero);
+    expect(walker.steps, 10);
+    walker.dispose();
+
+    final restarted = make();
+    await restarted.load();
+    await restarted.start();
+    events.add(600);
+    events.add(605);
+    await Future<void>.delayed(Duration.zero);
+    expect(restarted.steps, 15);
+    restarted.dispose();
+    await events.close();
+  });
+
+  test('new day keeps previous totals in history', () async {
+    await emit(100);
+    await emit(130);
+    now = DateTime(2026, 10, 26);
+    await emit(140);
+    await emit(144);
+    expect(controller.history, {'2026-10-25': 30});
+    expect(jsonDecode(stored!)['history'], {'2026-10-25': 30});
+    final restored = StepController(now: () => now, read: () async => stored);
+    await restored.load();
+    expect(restored.history, {'2026-10-25': 30});
+    expect(restored.steps, 4);
+    restored.dispose();
+  });
 }

@@ -25,46 +25,59 @@ class ActivityRepository {
         .stream(primaryKey: ['user_id', 'kind', 'device_id'])
         .eq('user_id', userId)
         .map((rows) {
-      final currentToday = AppDateUtils.dateOnly(DateTime.now());
-      final todayStr = _formatDate(currentToday);
-      final startOfWeek = _getStartOfWeek(currentToday);
+          final currentToday = AppDateUtils.dateOnly(DateTime.now());
+          final todayStr = _formatDate(currentToday);
+          final startOfWeek = _getStartOfWeek(currentToday);
 
-      int todaySteps = 0;
-      int weeklyTotal = 0;
+          int todaySteps = 0;
+          int weeklyTotal = 0;
 
-      for (final row in rows) {
-        if (row['kind'] != _stepKind) continue;
+          for (final row in rows) {
+            if (row['kind'] != _stepKind) continue;
 
-        final payload = row['payload'];
-        if (payload is! Map<String, dynamic>) continue;
+            final payload = row['payload'];
+            if (payload is! Map<String, dynamic>) continue;
 
-        final dateStr = payload['date'] as String?;
-        final steps = (payload['steps'] as num?)?.toInt() ?? 0;
-        // Trường 'last' cũng có sẵn ở đây nếu bạn cần dùng để khôi phục trạng thái cảm biến:
-        // final last = (payload['last'] as num?)?.toInt() ?? 0;
+            final dateStr = payload['date'] as String?;
+            final steps = (payload['steps'] as num?)?.toInt() ?? 0;
+            // Trường 'last' cũng có sẵn ở đây nếu bạn cần dùng để khôi phục trạng thái cảm biến:
+            // final last = (payload['last'] as num?)?.toInt() ?? 0;
 
-        if (dateStr == null) continue;
-        final recordDate = DateTime.tryParse(dateStr);
-        if (recordDate == null) continue;
+            if (dateStr == null) continue;
+            final recordDate = DateTime.tryParse(dateStr);
+            if (recordDate == null) continue;
 
-        final normalizedDate = AppDateUtils.dateOnly(recordDate);
-        if (!normalizedDate.isBefore(startOfWeek) &&
-            !normalizedDate.isAfter(currentToday)) {
-          weeklyTotal += steps;
-        }
+            final normalizedDate = AppDateUtils.dateOnly(recordDate);
+            if (!normalizedDate.isBefore(startOfWeek) &&
+                !normalizedDate.isAfter(currentToday)) {
+              weeklyTotal += steps;
+            }
 
-        if (dateStr == todayStr) {
-          todaySteps += steps;
-        }
-      }
+            if (dateStr == todayStr) {
+              todaySteps += steps;
+            }
 
-      return StepRecord(
-        date: currentToday,
-        steps: todaySteps,
-        goal: AppConstants.stepGoal,
-        weeklyTotal: weeklyTotal,
-      );
-    });
+            // Past days of this week, kept by StepController in payload 'history'.
+            final history = payload['history'];
+            if (history is Map<String, dynamic>) {
+              for (final entry in history.entries) {
+                final day = DateTime.tryParse(entry.key);
+                if (day != null &&
+                    !day.isBefore(startOfWeek) &&
+                    day.isBefore(currentToday)) {
+                  weeklyTotal += (entry.value as num?)?.toInt() ?? 0;
+                }
+              }
+            }
+          }
+
+          return StepRecord(
+            date: currentToday,
+            steps: todaySteps,
+            goal: AppConstants.stepGoal,
+            weeklyTotal: weeklyTotal,
+          );
+        });
   }
 
   /// Lấy dữ liệu bước chân hôm nay 1 lần.
@@ -114,11 +127,7 @@ class ActivityRepository {
         'user_id': userId,
         'kind': _stepKind,
         'device_id': deviceId,
-        'payload': {
-          'date': date,
-          'steps': steps,
-          'last': last,
-        },
+        'payload': {'date': date, 'steps': steps, 'last': last},
       });
       return true;
     } catch (_) {
@@ -144,8 +153,8 @@ class ActivityRepository {
 
   String _formatDate(DateTime date) =>
       '${date.year.toString().padLeft(4, '0')}-'
-          '${date.month.toString().padLeft(2, '0')}-'
-          '${date.day.toString().padLeft(2, '0')}';
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 
   DateTime _getStartOfWeek(DateTime date) =>
       date.subtract(Duration(days: date.weekday - 1));

@@ -28,6 +28,9 @@ class PhysicalController extends ChangeNotifier {
   double? heightCm;
   double? weightKg;
   int waterMl = 0;
+  // Past days' water ('YYYY-MM-DD' → ml), kept so a new day doesn't erase them.
+  // ponytail: unbounded (~8 KB/year); prune or move to rows if it ever matters.
+  Map<String, int> waterHistory = {};
   String? _waterDate;
   bool canUndo = false;
 
@@ -74,8 +77,15 @@ class PhysicalController extends ChangeNotifier {
       double? weight;
       var water = 0;
       var date = _date(_now());
+      var history = <String, int>{};
       if (raw != null) {
         final data = jsonDecode(raw) as Map<String, dynamic>;
+        history = {
+          for (final entry
+              in ((data['waterHistory'] as Map<String, dynamic>?) ?? {})
+                  .entries)
+            entry.key: entry.value as int,
+        };
         height = (data['heightCm'] as num?)?.toDouble();
         weight = (data['weightKg'] as num?)?.toDouble();
         water = data['waterMl'] as int;
@@ -99,6 +109,7 @@ class PhysicalController extends ChangeNotifier {
       heightCm = height;
       weightKg = weight;
       waterMl = water;
+      waterHistory = history;
       _waterDate = date;
       ready = true;
       refreshDay();
@@ -114,6 +125,7 @@ class PhysicalController extends ChangeNotifier {
     if (!ready) return;
     final today = _date(_now());
     if (_waterDate == today) return;
+    if (_waterDate != null && waterMl > 0) waterHistory[_waterDate!] = waterMl;
     _waterDate = today;
     waterMl = 0;
     canUndo = false;
@@ -165,6 +177,7 @@ class PhysicalController extends ChangeNotifier {
           'weightKg': nextWeight,
           'waterMl': nextWater,
           'waterDate': date,
+          'waterHistory': waterHistory,
         }),
       );
       if (!saved) throw StateError('Preferences write failed');
