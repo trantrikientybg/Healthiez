@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'dart:io';
+import 'package:flutter/services.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/date_utils.dart';
 import '../models/screen_time_record.dart';
@@ -135,14 +136,33 @@ class ActivityRepository {
     }
   }
 
+  static const _screenTimeChannel = MethodChannel('healthiez/screen_time');
+
   Future<ScreenTimeRecord> getTodayScreenTime() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    final now = DateTime.now();
+    final today = AppDateUtils.dateOnly(now);
+    int totalMinutes = 0;
+
+    if (Platform.isAndroid) {
+      try {
+        final int? mins = await _screenTimeChannel.invokeMethod<int>(
+          'getTodayScreenOnMinutes',
+        );
+        totalMinutes = mins ?? 0;
+      } catch (_) {
+        totalMinutes = 0;
+      }
+    }
+
     return ScreenTimeRecord(
-      date: AppDateUtils.dateOnly(DateTime.now()),
-      minutes: 200,
+      date: today,
+      minutes: totalMinutes,
       limitMinutes: AppConstants.screenTimeLimitMinutes,
     );
   }
+
+
+
 
   StepRecord _emptyStepRecord(DateTime date) => StepRecord(
     date: date,
