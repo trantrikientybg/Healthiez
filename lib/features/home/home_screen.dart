@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_constants.dart';
@@ -34,13 +35,21 @@ class HomeScreen extends StatefulWidget {
   /// Chuyển sang tab Thể chất (thẻ gợi ý đi bộ/chạy bộ).
   final VoidCallback? onOpenPhysical;
 
-  const HomeScreen({super.key, this.onOpenMental, this.onOpenPhysical});
+  /// Tab Trang chủ có đang được mở không (để làm mới số liệu khi quay lại).
+  final bool active;
+
+  const HomeScreen({
+    super.key,
+    this.onOpenMental,
+    this.onOpenPhysical,
+    this.active = true,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final UserRepository _userRepo = UserRepository();
   final ActivityRepository _activityRepo = ActivityRepository();
   final MoodRepository _moodRepo = MoodRepository();
@@ -57,19 +66,75 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<DateTime, Mood> _moodHistory = {};
   Set<String> _dismissed = {};
 
+  // Làm mới số liệu trực tiếp (bước chân, thời gian dùng máy)
+  static const Duration _liveRefreshEvery = Duration(seconds: 30);
+  StreamSubscription<StepRecord>? _stepsSub;
+  bool _stepsStreamBroken = false;
+  Timer? _liveTimer;
+
   DateTime _now() => DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     MoodSync.instance.addListener(_onMoodSync);
+    _listenSteps();
+    _liveTimer = Timer.periodic(_liveRefreshEvery, (_) {
+      if (mounted && widget.active) _refreshLive();
+    });
     _loadData();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _liveTimer?.cancel();
+    _stepsSub?.cancel();
     MoodSync.instance.removeListener(_onMoodSync);
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Vừa chuyển sang tab Trang chủ: lấy số liệu mới
+    if (!oldWidget.active && widget.active) _refreshLive();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Mở lại app (hoặc mở khóa máy): lấy số liệu mới
+    if (state == AppLifecycleState.resumed && widget.active) _refreshLive();
+  }
+
+  /// Nghe bước chân theo thời gian thực: tab Thể chất ghi bước mới là thẻ Tổng quan đổi ngay.
+  void _listenSteps() {
+    _stepsSub?.cancel();
+    _stepsStreamBroken = false;
+    _stepsSub = _activityRepo.watchTodaySteps().listen(
+      (record) {
+        if (mounted) setState(() => _steps = record);
+      },
+      onError: (Object _) {
+        // Kênh Realtime bị ngắt: bộ hẹn giờ vẫn làm mới, và sẽ nghe lại ở lần sau
+        _stepsStreamBroken = true;
+      },
+    );
+  }
+
+  /// Đọc lại bước chân và thời gian dùng máy (hẹn giờ, mở lại app, quay lại tab).
+  Future<void> _refreshLive() async {
+    if (_stepsStreamBroken) _listenSteps();
+    final stepsF = _activityRepo.getTodaySteps();
+    final screenF = _activityRepo.getTodayScreenTime();
+    final steps = await stepsF;
+    final screen = await screenF;
+    if (!mounted) return;
+    setState(() {
+      if (steps != null) _steps = steps; // không đọc được thì giữ số cũ
+      _screenTime = screen;
+    });
   }
 
   void _onMoodSync() {
@@ -82,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final profileF = _userRepo.getProfile();
     final streakF = _userRepo.getStreak();
     final stepsF = _activityRepo.getTodaySteps();
-    final sleepF = _sleepRepo.getLastNightSleep();
+    final sleepF = _sleepRepo.getLastNightSleep(); // đọc nhanh trên máy
     final screenF = _activityRepo.getTodayScreenTime();
     final moodF = _moodRepo.getToday();
     final historyF = _moodRepo.getRecent(days: AppConstants.moodTrendDays);
@@ -101,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _profile = profile;
       _streak = streak;
-      _steps = steps;
+      _steps = steps ?? _steps ?? _activityRepo.emptyStepRecord();
       _sleep = sleep;
       _sleepLoaded = true;
       _screenTime = screen;
@@ -109,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _moodHistory = history;
       _dismissed = dismissed;
     });
+    unawaited(_syncSleep()); // đồng bộ giấc ngủ với DB ở nền
   }
 
   Future<void> _onMoodSelected(Mood mood) async {
@@ -186,6 +252,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _reloadSleep() async {
     final sleep = await _sleepRepo.getLastNightSleep();
+    if (!mounted) return;
+    setState(() {
+      _sleep = sleep;
+      _sleepLoaded = true;
+    });
+    unawaited(_syncSleep());
+  }
+
+  /// Đẩy giấc ngủ chưa lên DB và kéo về giấc ngủ từ DB (đổi máy, cài lại app).
+  Future<void> _syncSleep() async {
+    final sleep = await _sleepRepo.syncAndGetLastNightSleep();
     if (!mounted) return;
     setState(() {
       _sleep = sleep;

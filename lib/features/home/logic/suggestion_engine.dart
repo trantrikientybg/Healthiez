@@ -67,7 +67,9 @@ class SuggestionEngine {
 
   static Suggestion? _screenTime(SuggestionInput i) {
     final s = i.screenTime;
-    if (s == null || s.minutes <= AppConstants.screenTimeWarningMinutes) {
+    if (s == null ||
+        !s.available || // không đọc được thì không cảnh báo
+        s.minutes <= AppConstants.screenTimeWarningMinutes) {
       return null;
     }
     return Suggestion(

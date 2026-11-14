@@ -56,6 +56,7 @@ class _MainShellState extends State<MainShell> {
       ),
       _KeepAlivePage(
         child: HomeScreen(
+          active: _currentIndex == _homeIndex,
           onOpenMental: () => _onTabSelected(_mentalIndex),
           onOpenPhysical: () => _onTabSelected(_physicalIndex),
         ),

@@ -63,12 +63,19 @@ class SleepLogic {
     final history = Map<String, SleepEntry>.from(closed.history);
     history[key] = history.containsKey(key) ? history[key]!.merge(entry) : entry;
 
+    // Ngày ngủ này cần được đẩy lên DB
+    final pending = Set<String>.from(closed.pending)..add(key);
+
     // Chỉ giữ vài ngày gần nhất
     final keys = history.keys.toList()..sort((a, b) => b.compareTo(a));
     for (final old in keys.skip(SleepData.keepDays)) {
       history.remove(old);
+      pending.remove(old);
     }
-    return (closed.copyWith(clearActive: true, history: history), entry);
+    return (
+      closed.copyWith(clearActive: true, history: history, pending: pending),
+      entry,
+    );
   }
 
   /// Chốt phiên bị bỏ dở khi mở lại app (ví dụ app bị hệ thống tắt giữa đêm):

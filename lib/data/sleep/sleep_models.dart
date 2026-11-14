@@ -84,6 +84,16 @@ class SleepEntry {
     required this.asleep,
   });
 
+  @override
+  bool operator ==(Object other) =>
+      other is SleepEntry &&
+      other.bedTime == bedTime &&
+      other.wakeTime == wakeTime &&
+      other.asleep == asleep;
+
+  @override
+  int get hashCode => Object.hash(bedTime, wakeTime, asleep);
+
   /// Gộp hai phiên cùng một ngày ngủ (ví dụ ngủ trưa).
   SleepEntry merge(SleepEntry other) => SleepEntry(
         bedTime: bedTime.isBefore(other.bedTime) ? bedTime : other.bedTime,
@@ -111,21 +121,31 @@ class SleepData {
   final SleepSession? active;
   final Map<String, SleepEntry> history; // khóa: SleepDay.key
 
-  const SleepData({this.active, this.history = const {}});
+  /// Các ngày ngủ đã lưu trên máy nhưng CHƯA đẩy lên Supabase (sẽ thử lại sau).
+  final Set<String> pending;
+
+  const SleepData({
+    this.active,
+    this.history = const {},
+    this.pending = const {},
+  });
 
   SleepData copyWith({
     SleepSession? active,
     bool clearActive = false,
     Map<String, SleepEntry>? history,
+    Set<String>? pending,
   }) =>
       SleepData(
         active: clearActive ? null : (active ?? this.active),
         history: history ?? this.history,
+        pending: pending ?? this.pending,
       );
 
   String encode() => jsonEncode({
         'active': active?.toJson(),
         'history': {for (final e in history.entries) e.key: e.value.toJson()},
+        'pending': pending.toList(),
       });
 
   /// Đọc từ chuỗi JSON; dữ liệu hỏng hoặc rỗng thì trả về dữ liệu trống.
@@ -141,9 +161,12 @@ class SleepData {
         }
       }
       final a = j['active'];
+      final p = j['pending'];
       return SleepData(
         active: a == null ? null : SleepSession.fromJson(a as Map<String, dynamic>),
         history: hist,
+        // Dữ liệu cũ (chưa có trường pending) thì coi như rỗng
+        pending: p is List ? p.map((e) => e.toString()).toSet() : <String>{},
       );
     } catch (_) {
       return const SleepData();

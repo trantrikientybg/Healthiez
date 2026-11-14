@@ -1,0 +1,13 @@
+BẢN VÁ: cập nhật số liệu Home + bước chân theo tuần + kiểm tra on-screen + đồng bộ giấc ngủ lên DB
+=====================================================================================================
+Áp dụng: chép lib/, test/, sql/ đè vào project (nhánh main). Chạy sql/sleep_records.sql trong Supabase
+(sau khi báo bạn phụ trách DB). Chạy: flutter pub get, dừng app và chạy lại hẳn.
+
+File SỬA:   lib/features/home/home_screen.dart, lib/features/home/widgets/overview_section.dart,
+            lib/features/home/logic/suggestion_engine.dart, lib/navigation/main_shell.dart,
+            lib/data/repositories/activity_repository.dart, lib/data/repositories/sleep_repository.dart,
+            lib/data/models/screen_time_record.dart, lib/data/sleep/{sleep_models,sleep_logic,sleep_store}.dart,
+            lib/features/sleep/sleep_controller.dart
+File MỚI:   lib/data/repositories/step_aggregator.dart, lib/data/sleep/{sleep_remote,sleep_sync}.dart,
+            sql/sleep_records.sql, test/data/{step_aggregator_test,sleep_sync_test}.dart,
+            test/features/home/screen_time_unavailable_test.dart

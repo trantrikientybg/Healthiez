@@ -1,17 +1,25 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/sleep/sleep_logic.dart';
 import '../../data/sleep/sleep_models.dart';
 import '../../data/sleep/sleep_store.dart';
+import '../../data/sleep/sleep_sync.dart';
 
 /// Trạng thái màn Chế độ ngủ. Mọi thay đổi được lưu ngay vào bộ nhớ,
 /// để không mất dữ liệu nếu app bị hệ thống tắt giữa đêm.
 class SleepController extends ChangeNotifier {
-  SleepController({SleepStore? store, DateTime Function()? now})
-      : _store = store ?? SleepStore(),
-        _now = now ?? DateTime.now;
+  SleepController({
+    SleepStore? store,
+    DateTime Function()? now,
+    SleepSyncService? sync,
+  })  : _store = store ?? SleepStore(),
+        _now = now ?? DateTime.now {
+    _sync = sync ?? SleepSyncService.forCurrentUser(_store, now: _now);
+  }
 
   final SleepStore _store;
   final DateTime Function() _now;
+  late final SleepSyncService? _sync; // null nếu chưa đăng nhập
 
   SleepData _data = const SleepData();
   Future<void> _pendingSave = Future.value();
@@ -49,6 +57,12 @@ class SleepController extends ChangeNotifier {
     final (data, entry) = SleepLogic.finish(_data, _now());
     lastFinished = entry;
     _apply(data);
+
+    // Giấc ngủ vừa lưu trên máy: đẩy lên DB ở nền (thất bại thì lần mở app sau thử lại)
+    final sync = _sync;
+    if (entry != null && sync != null) {
+      unawaited(_pendingSave.then((_) => sync.sync()).catchError((_) {}));
+    }
     return entry;
   }
 

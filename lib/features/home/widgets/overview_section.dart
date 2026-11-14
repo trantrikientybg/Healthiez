@@ -106,10 +106,13 @@ class _OverviewSectionState extends State<OverviewSection> {
       percent: s?.percent ?? 0,
       lines: s == null
           ? const [MetricLine('', '...')]
-          : [
-              MetricLine('Tổng thời gian:', s.totalLabel),
-              MetricLine('Trạng thái:', s.status),
-            ],
+          : !s.available
+              // Chưa đọc được (ví dụ chưa cấp quyền): không hiện 0 phút
+              ? const [MetricLine('', 'Chưa có dữ liệu')]
+              : [
+                  MetricLine('Tổng thời gian:', s.totalLabel),
+                  MetricLine('Trạng thái:', s.status),
+                ],
     );
   }
 }
